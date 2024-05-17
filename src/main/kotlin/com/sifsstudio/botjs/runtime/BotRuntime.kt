@@ -124,7 +124,9 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
         lateinit var EXECUTOR: ExecutorService
         fun onServerStarting(@Suppress("UNUSED_PARAMETER") event: ServerStartingEvent) {
             EXECUTOR =
-                Executors.newCachedThreadPool { Thread(it, "BotJS-BotThread-" + BOT_THREAD_ID.getAndIncrement()) }
+                Executors.newCachedThreadPool {
+                    Thread.ofVirtual().name("BotJS-BotThread-" + BOT_THREAD_ID.getAndIncrement()).unstarted(it)
+                }
         }
 
         val DUMMY_RUNTIME = BotRuntime()
