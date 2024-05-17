@@ -10,7 +10,6 @@ displayName="${mod_name}"
 #logoFile="examplemod.png" #optional
 #credits="" #optional
 authors="${mod_authors}" #optional
-#displayTest="MATCH_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
 description='''${mod_description}'''
 
 [[accessTransformers]]
