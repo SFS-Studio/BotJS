@@ -1,18 +1,24 @@
 package com.sifsstudio.botjs.blockentity
 
+import com.sifsstudio.botjs.inventory.BotAssemblerMenu
 import com.sifsstudio.botjs.item.BotModuleItem
 import com.sifsstudio.botjs.item.McuItem
 import com.sifsstudio.botjs.item.StorageItem
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.Component
+import net.minecraft.world.MenuProvider
+import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.entity.player.Player
+import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.neoforged.neoforge.items.ItemStackHandler
 
 class BotAssemblerEntity(pPos: BlockPos, pBlockState: BlockState) :
-    BlockEntity(BlockEntities.BOT_ASSEMBLER, pPos, pBlockState) {
+    BlockEntity(BlockEntities.BOT_ASSEMBLER, pPos, pBlockState), MenuProvider {
     val mcu = object : ItemStackHandler(1) {
         override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
             return stack.item is McuItem
@@ -42,4 +48,9 @@ class BotAssemblerEntity(pPos: BlockPos, pBlockState: BlockState) :
         storage.deserializeNBT(pRegistries, pTag.getCompound("storage"))
         components.deserializeNBT(pRegistries, pTag.getCompound("components"))
     }
+
+    override fun createMenu(pContainerId: Int, pPlayerInventory: Inventory, pPlayer: Player): AbstractContainerMenu =
+        BotAssemblerMenu(pContainerId, pPlayerInventory, mcu, storage, components)
+
+    override fun getDisplayName(): Component = Component.translatable("menu.botjs.bot_assembler.title")
 }

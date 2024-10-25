@@ -1,6 +1,5 @@
 package com.sifsstudio.botjs
 
-import com.sifsstudio.botjs.attachment.Attachments
 import com.sifsstudio.botjs.block.Blocks
 import com.sifsstudio.botjs.blockentity.BlockEntities
 import com.sifsstudio.botjs.entity.Entities
@@ -43,7 +42,6 @@ object BotJS {
         Entities.REGISTRY.register(MOD_BUS)
         BlockEntities.REGISTRY.register(MOD_BUS)
         MenuTypes.REGISTRY.register(MOD_BUS)
-        Attachments.REGISTRY.register(MOD_BUS)
         FORGE_BUS.addListener(BotRuntime.Companion::onServerStarting)
     }
 }

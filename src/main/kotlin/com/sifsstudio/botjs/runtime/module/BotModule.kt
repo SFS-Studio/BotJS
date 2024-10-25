@@ -1,7 +1,6 @@
 package com.sifsstudio.botjs.runtime.module
 
 import com.sifsstudio.botjs.entity.BotEntity
-import org.mozilla.javascript.annotations.JSFunction
 
 class Register(private val resetValue: Int, private val rwFlag: RWFlag) {
     companion object {
@@ -16,7 +15,6 @@ class Register(private val resetValue: Int, private val rwFlag: RWFlag) {
         ReadWrite,
     }
 
-    @JSFunction
     fun write(data: Int) {
         when (rwFlag) {
             RWFlag.ReadWrite, RWFlag.WriteOnly -> content = data
@@ -24,7 +22,6 @@ class Register(private val resetValue: Int, private val rwFlag: RWFlag) {
         }
     }
 
-    @JSFunction
     fun read() =
         when (rwFlag) {
             RWFlag.ReadOnly, RWFlag.ReadWrite -> content

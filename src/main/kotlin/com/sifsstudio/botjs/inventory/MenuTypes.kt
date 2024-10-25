@@ -20,4 +20,7 @@ object MenuTypes {
         Supplier {
             IMenuTypeExtension.create(::FirmwareProgrammerMenu)
         })
+    val BOT_ASSEMBLER: MenuType<BotAssemblerMenu> by REGISTRY.register("bot_assembler_menu", Supplier {
+        MenuType(::BotAssemblerMenu, FeatureFlagSet.of())
+    })
 }
