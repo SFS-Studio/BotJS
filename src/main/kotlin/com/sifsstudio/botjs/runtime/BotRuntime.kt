@@ -2,6 +2,7 @@ package com.sifsstudio.botjs.runtime
 
 import com.sifsstudio.botjs.entity.BotEntity
 import com.sifsstudio.botjs.runtime.module.BotModule
+import com.sifsstudio.botjs.util.set
 import com.sifsstudio.botjs.util.withContext
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
@@ -31,8 +32,8 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
     private val syncTickCondition = syncTickLock.newCondition()
 
     override fun serializeNBT(provider: HolderLookup.Provider): @UnknownNullability CompoundTag = CompoundTag().apply {
-        putString("script", script)
-        putBoolean("running", isRunning)
+        this["script"] = script
+        this["running"] = isRunning
     }
 
     override fun deserializeNBT(provider: HolderLookup.Provider, nbt: CompoundTag) {
@@ -43,37 +44,37 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
     fun launch() {
         runtimeFuture = EXECUTOR.submit {
             isRunning = true
-            try {
-                InterruptableContextFactory.init()
-                withContext { ctx ->
-                    val scope = ImporterTopLevel(ctx).apply {
-                        ctx.initStandardObjects(this)
-                        NativeRegUtils.init(this, false)
-                        defineProperty("COM0", internalCOMs[0], READONLY.or(PERMANENT))
-                        defineProperty("COM1", internalCOMs[1], READONLY.or(PERMANENT))
-                        put(
-                            "tickSync",
-                            this,
-                            ExposedFunction("tickSync", SYNC_TICK_METHOD, this@BotRuntime)
-                        )
+            InterruptibleContextFactory.init()
+            val error = withContext { ctx ->
+                val scope = ImporterTopLevel(ctx).apply {
+                    //Avoid redundant initialization
+                    //ctx.initSafeStandardObjects(this)
+                    NativeRegUtils.init(this, false)
+                    defineProperty("COM0", internalCOMs[0], READONLY or PERMANENT)
+                    defineProperty("COM1", internalCOMs[1], READONLY or PERMANENT)
+                    put(
+                        "tickSync",
+                        this,
+                        ExposedFunction("tickSync", SYNC_TICK_METHOD, this@BotRuntime)
+                    )
+                }
+                parentScope = scope
+                ctx.evaluateString(scope, script, "bot_script", 0, null)
+            }.exceptionOrNull()
+            with(error) {
+                when (this) {
+                    null -> {}
+                    is WrappedException -> {
+                        if (wrappedException !is InterruptedException) {
+                            printStackTrace()
+                        }
                     }
-                    this.parentScope = scope
-                    ctx.evaluateString(scope, script, "bot_script", 0, null)
+                    is Exception -> {
+                        printStackTrace()
+                    }
                 }
-            } catch (exception: WrappedException) {
-                if (exception.wrappedException is InterruptedException) {
-                    return@submit
-                }
-                exception.printStackTrace()
-            } catch (err: Error) {
-                return@submit
-            } catch (err: InterruptedException) {
-                return@submit
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-            } finally {
-                isRunning = false
             }
+            isRunning = false
         }
     }
 
@@ -145,12 +146,12 @@ class ExposedFunction(name: String, methodOrConstructor: Member, scope: Scriptab
     }
 }
 
-class InterruptableContextFactory : ContextFactory() {
+class InterruptibleContextFactory : ContextFactory() {
     companion object {
         private var initialized = false
         fun init() {
             if (!initialized) {
-                initGlobal(InterruptableContextFactory())
+                initGlobal(InterruptibleContextFactory())
                 initialized = true
             }
         }
@@ -158,7 +159,7 @@ class InterruptableContextFactory : ContextFactory() {
 
     override fun observeInstructionCount(cx: Context, instructionCount: Int) {
         if (Thread.currentThread().isInterrupted) {
-            throw Error("interruption")
+            throw InterruptedException("interruption")
         }
     }
 

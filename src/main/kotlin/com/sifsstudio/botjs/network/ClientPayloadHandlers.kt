@@ -8,9 +8,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 object ClientPayloadHandlers {
     fun handleFlashResult(payload: FlashResult, context: IPayloadContext) {
         context.enqueueWork {
-            val screen = Minecraft.getInstance().screen
-            if (screen is FirmwareProgrammerScreen) {
-                screen.flashResult = Component.translatable(payload.messageKey)
+            (Minecraft.getInstance().screen as? FirmwareProgrammerScreen)?.apply {
+                flashResult = Component.translatable(payload.messageKey)
             }
         }.exceptionally {
             context.disconnect(Component.translatable("botjs.networking.failed", it.message))

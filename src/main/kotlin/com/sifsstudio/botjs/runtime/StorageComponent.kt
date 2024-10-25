@@ -1,5 +1,6 @@
 package com.sifsstudio.botjs.runtime
 
+import org.mozilla.javascript.ScriptRuntime
 import org.mozilla.javascript.Scriptable
 
 class StorageComponent(private val storage: IntArray): Scriptable {
@@ -52,14 +53,5 @@ class StorageComponent(private val storage: IntArray): Scriptable {
 
     override fun getDefaultValue(hint: Class<*>?): Any = "[object Storage]"
 
-    override fun hasInstance(instance: Scriptable): Boolean {
-        var proto = instance.prototype
-        while (proto != null) {
-            if (proto.equals(this)) {
-                return true
-            }
-            proto = proto.prototype
-        }
-        return false
-    }
+    override fun hasInstance(instance: Scriptable) = ScriptRuntime.jsDelegatesTo(instance, this)
 }

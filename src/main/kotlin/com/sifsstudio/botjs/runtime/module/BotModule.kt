@@ -2,34 +2,32 @@ package com.sifsstudio.botjs.runtime.module
 
 import com.sifsstudio.botjs.entity.BotEntity
 
-class Register(private val resetValue: Int, private val rwFlag: RWFlag) {
+class Register(private val default: Int, private val rwFlag: RWFlag) {
     companion object {
         const val FAIL_DEFAULT = -1
     }
 
-    internal var content = resetValue
+    internal var content = default
 
-    enum class RWFlag {
-        ReadOnly,
-        WriteOnly,
-        ReadWrite,
+    enum class RWFlag(val readable: Boolean, val writable: Boolean) {
+        ReadOnly(true, false),
+        WriteOnly(false, true),
+        ReadWrite(true, true),
     }
 
     fun write(data: Int) {
-        when (rwFlag) {
-            RWFlag.ReadWrite, RWFlag.WriteOnly -> content = data
-            else -> Unit
+        if(rwFlag.writable) {
+            content = data
         }
     }
 
     fun read() =
-        when (rwFlag) {
-            RWFlag.ReadOnly, RWFlag.ReadWrite -> content
-            else -> FAIL_DEFAULT
-        }
+        if(rwFlag.readable) {
+            content
+        } else FAIL_DEFAULT
 
     fun reset() {
-        content = resetValue
+        content = default
     }
 }
 

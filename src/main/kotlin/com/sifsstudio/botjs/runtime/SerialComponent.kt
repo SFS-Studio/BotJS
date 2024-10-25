@@ -1,6 +1,7 @@
 package com.sifsstudio.botjs.runtime
 
 import com.sifsstudio.botjs.runtime.module.Register
+import org.mozilla.javascript.ScriptRuntime
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
 
@@ -52,16 +53,7 @@ class RegisterArray(private val registers: Array<Register>) : Scriptable {
 
     override fun getDefaultValue(hint: Class<*>?): Any = "[object RegArray]"
 
-    override fun hasInstance(instance: Scriptable): Boolean {
-        var proto = instance.prototype
-        while (proto != null) {
-            if (proto.equals(this)) {
-                return true
-            }
-            proto = proto.prototype
-        }
-        return false
-    }
+    override fun hasInstance(instance: Scriptable) = ScriptRuntime.jsDelegatesTo(instance, this)
 
 }
 
@@ -102,21 +94,21 @@ class SerialComponent(private val runtime: BotRuntime, private val id: Int) : Sc
 
     override fun delete(index: Int) = Unit
 
-    override fun getPrototype(): Scriptable? = prototype
+    override fun getPrototype() = prototype
 
     override fun setPrototype(prototype: Scriptable?) {
         this.prototype = prototype
     }
 
-    override fun getParentScope(): Scriptable? = parent
+    override fun getParentScope() = parent
 
     override fun setParentScope(parent: Scriptable?) {
         this.parent = parent
     }
 
-    override fun getIds(): Array<Any> = Array(0) {}
+    override fun getIds() = emptyArray<Any>()
 
-    override fun getDefaultValue(hint: Class<*>?): Any = "[object COM]"
+    override fun getDefaultValue(hint: Class<*>?) = "[object COM]"
 
     override fun hasInstance(instance: Scriptable): Boolean {
         var proto = instance.prototype
@@ -137,18 +129,25 @@ class SerialComponent(private val runtime: BotRuntime, private val id: Int) : Sc
         Register(0, Register.RWFlag.ReadWrite)
     })
 
+    /*
+     * From the least digit of bufferCtrl, every (2i,2i+1) digits
+     * decides whether to interact with the register of COM[id]
+     * located by bufferDst[i]
+     * The least bit controls enable/disable
+     * The most bit controls read/write mode, so it reads into
+     * buffers[i] or copies the data from buffers[i] into dst.
+     */
     fun tick() {
         if (runtime == BotRuntime.DUMMY_RUNTIME) {
             return
         }
-        val module = runtime.comConnectedModule(id)
-        if (module != null) {
+        runtime.comConnectedModule(id)?.let { module ->
             for (i in 0..1) {
                 val enBitMask = 1 shl (i shl 1)
-                if (bufferCtrl.content.and(enBitMask) == enBitMask) {
+                if (bufferCtrl.content and enBitMask == enBitMask) {
                     val rwBitMask = 1 shl ((i shl 1) + 1)
                     val register = module.register(bufferDst[i].content)
-                    when (bufferCtrl.content.and(rwBitMask)) {
+                    when (bufferCtrl.content and rwBitMask) {
                         0 -> {
                             buffers[i].content = register.read()
                         }

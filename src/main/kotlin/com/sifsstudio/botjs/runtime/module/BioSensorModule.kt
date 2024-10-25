@@ -48,15 +48,15 @@ class BioSensorModule : BotModule {
                         sensorRsltPos[index * 3 + 1].content = offset.y.toFloat().toRawBits()
                         sensorRsltPos[index * 3 + 2].content = offset.z.toFloat().toRawBits()
                     }
-                sensorSt.content = sensorSt.content.and(0x1.inv())
+                sensorSt.content = sensorSt.content and 0x1.inv()
             }
             scanCountdown--
         } else {
-            if (sensorCtrl.content.and(1) == 1) {
+            if (sensorCtrl.content and 1 == 1) {
                 scanCountdown = SCAN_INTERVAL
-                sensorSt.content = sensorSt.content.or(1)
+                sensorSt.content = sensorSt.content or 1
             }
         }
-        sensorCtrl.content = sensorCtrl.content.and(1.inv())
+        sensorCtrl.content = sensorCtrl.content and 1.inv()
     }
 }

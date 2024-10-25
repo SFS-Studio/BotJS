@@ -1,6 +1,6 @@
 package com.sifsstudio.botjs.network
 
-import com.sifsstudio.botjs.blockentity.FirmwareProgrammerEntity
+import com.sifsstudio.botjs.blockentity.FirmwareProgrammerBlockEntity
 import com.sifsstudio.botjs.item.McuItem
 import com.sifsstudio.botjs.util.withContext
 import net.minecraft.network.chat.Component
@@ -13,40 +13,39 @@ object ServerPayloadHandlers {
     fun handleFirmwareProgrammerAction(payload: FirmwareProgrammerAction, context: IPayloadContext) {
         context.enqueueWork {
             val level = context.player().level()
-            level.getBlockEntity(payload.flasherPos)?.let {
-                if (it is FirmwareProgrammerEntity) {
-                    it.script = payload.script
-                    if (payload.flash) {
-                        if (it.mcuIn.getStackInSlot(0) != ItemStack.EMPTY) {
-                            if (it.mcuOut.getStackInSlot(0) == ItemStack.EMPTY) {
-                                var compileError: Component? = null
-                                withContext { ctx ->
-                                    try {
-                                        ctx.compileString(it.script, "bot_script", 0, null)
-                                    } catch (parseError: ParserException) {
-                                        compileError = Component.literal(parseError.message ?: "Compile Error")
-                                    } catch (evalError: EvaluatorException) {
-                                        compileError = Component.literal(evalError.message ?: "Compile Error")
-                                    } catch (th: Throwable) {
-                                        th.printStackTrace()
+            (level.getBlockEntity(payload.flasherPos) as? FirmwareProgrammerBlockEntity) ?.let { be ->
+                be.script = payload.script
+                if (payload.flash) {
+                    if (be.mcuIn.getStackInSlot(0) != ItemStack.EMPTY) {
+                        if (be.mcuOut.getStackInSlot(0) == ItemStack.EMPTY) {
+                            // Compile the script in advance to check compile errors.
+                            withContext { ctx ->
+                                ctx.compileString(be.script, "bot_script", 0, null)
+                            }.fold (
+                                onFailure =  {
+                                    //TODO: Show error message to client
+                                    @Suppress("UNUSED_VARIABLE")
+                                    val errMsg = when (it) {
+                                        is ParserException -> Component.literal(it.message ?: "Compile Error")
+                                        is EvaluatorException -> Component.literal(it.message ?: "Compile Error")
+                                        else -> Component.literal("Unexpected error: $it")
                                     }
-                                }
-                                if (compileError != null) {
                                     context.reply(FlashResult("menu.botjs.firmware_programmer.flash_result.compile_error"))
-                                } else {
-                                    val mcu = it.mcuIn.extractItem(0, 1, false)
-                                    mcu.set(McuItem.SCRIPT_COMPONENT, it.script)
-                                    it.mcuOut.setStackInSlot(0, mcu)
-                                }
-                            } else {
-                                context.reply(FlashResult("menu.botjs.firmware_programmer.flash_result.output_occupied"))
-                            }
+                                },
+                                onSuccess = {
+                                    val mcu = be.mcuIn.extractItem(0, 1, false)
+                                    mcu.set(McuItem.SCRIPT_COMPONENT, be.script)
+                                    be.mcuOut.setStackInSlot(0, mcu)
+                                },
+                            )
                         } else {
-                            context.reply(FlashResult("menu.botjs.firmware_programmer.flash_result.nothing_to_flash"))
+                            context.reply(FlashResult("menu.botjs.firmware_programmer.flash_result.output_occupied"))
                         }
+                    } else {
+                        context.reply(FlashResult("menu.botjs.firmware_programmer.flash_result.nothing_to_flash"))
                     }
-                    it.setChanged()
                 }
+                be.setChanged()
             }
         }.exceptionally {
             context.disconnect(Component.translatable("botjs.networking.failed", it.message))

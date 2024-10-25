@@ -1,7 +1,7 @@
 package com.sifsstudio.botjs.block
 
 import com.mojang.serialization.MapCodec
-import com.sifsstudio.botjs.blockentity.FirmwareProgrammerEntity
+import com.sifsstudio.botjs.blockentity.FirmwareProgrammerBlockEntity
 import com.sifsstudio.botjs.inventory.FirmwareProgrammerMenu
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
@@ -27,12 +27,12 @@ class FirmwareProgrammer : BaseEntityBlock(Properties.of().noOcclusion().sound(S
     override fun codec(): MapCodec<out BaseEntityBlock> = CODEC
 
     override fun newBlockEntity(pPos: BlockPos, pState: BlockState): BlockEntity =
-        FirmwareProgrammerEntity(pPos, pState)
+        FirmwareProgrammerBlockEntity(pPos, pState)
 
     @Deprecated("")
     override fun getMenuProvider(pState: BlockState, pLevel: Level, pPos: BlockPos): MenuProvider =
         SimpleMenuProvider({ pContainerId, pPlayerInventory, _ ->
-            val blockEntity = pLevel.getBlockEntity(pPos)!! as FirmwareProgrammerEntity
+            val blockEntity = pLevel.getBlockEntity(pPos)!! as FirmwareProgrammerBlockEntity
             FirmwareProgrammerMenu(
                 pContainerId,
                 pPlayerInventory,
@@ -57,7 +57,7 @@ class FirmwareProgrammer : BaseEntityBlock(Properties.of().noOcclusion().sound(S
                 pPlayer.openMenu(menu) {
                     it.writeBlockPos(pPos)
                     pLevel.getBlockEntity(pPos)?.let { blockEntity ->
-                        if (blockEntity is FirmwareProgrammerEntity) {
+                        if (blockEntity is FirmwareProgrammerBlockEntity) {
                             it.writeUtf(blockEntity.script)
                         }
                     }

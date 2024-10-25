@@ -82,8 +82,8 @@ class ScriptEditBox(
         pNarrationElementOutput.add(
             NarratedElementType.TITLE, Component.translatable(
                 "gui.narrate.editBox",
-                this.message,
-                this.value
+                message,
+                value
             )
         )
     }
@@ -131,7 +131,7 @@ class ScriptEditBox(
     }
 
     override fun charTyped(pCodePoint: Char, pModifiers: Int): Boolean {
-        if (this.visible && this.isFocused && StringUtil.isAllowedChatCharacter(pCodePoint)) {
+        if (visible && isFocused && StringUtil.isAllowedChatCharacter(pCodePoint)) {
             textField.insertText(pCodePoint.toString())
             if (textField.lineCount != cachedLineCount) {
                 cachedLineCount = textField.lineCount
@@ -163,7 +163,7 @@ class ScriptEditBox(
 
     override fun renderContents(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
         val s = textField.value()
-        if (s.isEmpty() && !this.isFocused) {
+        if (s.isEmpty() && !isFocused) {
             pGuiGraphics.drawWordWrap(
                 font,
                 placeholder,
@@ -175,11 +175,11 @@ class ScriptEditBox(
         } else {
             val i = textField.cursor()
             val showCursor =
-                this.isFocused && (Util.getMillis() - this.focusedTime) / CURSOR_BLINK_INTERVAL_MS % 2 == 0L
+                isFocused && (Util.getMillis() - focusedTime) / CURSOR_BLINK_INTERVAL_MS % 2 == 0L
             val showLineCursor = i < s.length
             var j = 0
             var k = 0
-            var l = this.y + this.innerPadding()
+            var l = y + this.innerPadding()
             var realLineNo = 1
             var lineNoUpdated = true
 
@@ -196,8 +196,8 @@ class ScriptEditBox(
                 if (showCursor && showLineCursor && i >= stringView.beginIndex && i <= stringView.endIndex) {
                     if (inDisplayRange) {
                         j = (pGuiGraphics.drawString(
-                            this.font, s.substring(stringView.beginIndex, i),
-                            this.x + this.innerPadding() + lineNumberWidth, l, TEXT_COLOR
+                            font, s.substring(stringView.beginIndex, i),
+                            x + this.innerPadding() + lineNumberWidth, l, TEXT_COLOR
                         ) - CURSOR_INSERT_WIDTH)
                         pGuiGraphics.fill(
                             j,
@@ -207,7 +207,7 @@ class ScriptEditBox(
                             CURSOR_INSERT_COLOR
                         )
                         pGuiGraphics.drawString(
-                            this.font,
+                            font,
                             s.substring(i, stringView.endIndex),
                             j,
                             l,

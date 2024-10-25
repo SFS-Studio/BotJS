@@ -23,6 +23,17 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
     val runtime = BotRuntime()
     val modules = ItemStackHandler(9)
 
+    private fun recollectModule() {
+        runtime.clearModule()
+        for (i in 0..<modules.slots) {
+            val item = modules.getStackInSlot(i).item
+            if (item is BotModuleItem) {
+                runtime.installModule(item.module())
+            }
+        }
+    }
+
+    //TODO: Thread safety when unload
     override fun addAdditionalSaveData(pCompound: CompoundTag) {
         super.addAdditionalSaveData(pCompound)
         if (!level().isClientSide) {
@@ -45,13 +56,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
     override fun onAddedToWorld() {
         super.onAddedToWorld()
         if (!level().isClientSide) {
-            runtime.clearModule()
-            for (i in 0..<modules.slots) {
-                val item = modules.getStackInSlot(i).item
-                if (item is BotModuleItem) {
-                    runtime.installModule(item.module())
-                }
-            }
+            recollectModule()
         }
     }
 
@@ -77,13 +82,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         } else if (pPlayer.getItemInHand(pHand) isItem Items.SWITCH) {
             if (!this.level().isClientSide) {
                 if (!runtime.isRunning) {
-                    runtime.clearModule()
-                    for (i in 0..<modules.slots) {
-                        val item = modules.getStackInSlot(i).item
-                        if (item is BotModuleItem) {
-                            runtime.installModule(item.module())
-                        }
-                    }
+                    recollectModule()
                     runtime.launch()
                 } else {
                     runtime.stop()

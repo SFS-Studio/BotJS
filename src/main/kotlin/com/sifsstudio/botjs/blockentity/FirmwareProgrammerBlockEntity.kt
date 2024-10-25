@@ -9,13 +9,11 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.neoforged.neoforge.items.ItemStackHandler
 
-class FirmwareProgrammerEntity(pPos: BlockPos, pBlockState: BlockState) :
+class FirmwareProgrammerBlockEntity(pPos: BlockPos, pBlockState: BlockState) :
     BlockEntity(BlockEntities.FIRMWARE_PROGRAMMER, pPos, pBlockState) {
 
     val mcuIn = object : ItemStackHandler(1) {
-        override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
-            return stack.item is McuItem
-        }
+        override fun isItemValid(slot: Int, stack: ItemStack) = stack.item is McuItem
     }
     val mcuOut = ItemStackHandler(1)
     var script = ""

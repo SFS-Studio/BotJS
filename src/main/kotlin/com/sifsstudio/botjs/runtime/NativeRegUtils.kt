@@ -18,7 +18,7 @@ class NativeRegUtils : IdScriptableObject() {
             if (sealed) {
                 obj.sealObject()
             }
-            ScriptableObject.defineProperty(scope, "RegUtils", obj, ScriptableObject.DONTENUM)
+            ScriptableObject.defineProperty(scope, "RegUtils", obj, READONLY or DONTENUM or PERMANENT)
         }
     }
 

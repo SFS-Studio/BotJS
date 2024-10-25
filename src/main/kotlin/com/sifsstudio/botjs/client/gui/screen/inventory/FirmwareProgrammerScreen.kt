@@ -118,15 +118,14 @@ class FirmwareProgrammerScreen(
 
     override fun containerTick() {
         super.containerTick()
-        val flashResult = flashResult
-        if (flashResult != null) {
+        flashResult?.let { res ->
             minecraft?.let {
                 it.toasts.addToast(
                     SystemToast.multiline(
                         it,
                         SystemToast.SystemToastId(5000),
                         Component.translatable("toast.botjs.flash_failed"),
-                        flashResult
+                        res
                     )
                 )
             }
@@ -148,11 +147,10 @@ class FirmwareProgrammerScreen(
         val flashResult = flashResult
         if (menu.getSlot(0).hasItem()) {
             if (flashResult == null) {
-                val mcu = menu.getSlot(0).item.item
-                if (mcu is McuItem) {
+                (menu.getSlot(0).item.item as? McuItem)?.apply {
                     pGuiGraphics.drawWordWrap(
                         font,
-                        FormattedText.of("MCU: ${mcu.chipCode}\nPIN: ${mcu.pins}\nCOM: ${mcu.serials}"),
+                        FormattedText.of("MCU: $chipCode\nPIN: $pins\nCOM: $serials"),
                         331,
                         17,
                         78,
@@ -160,7 +158,7 @@ class FirmwareProgrammerScreen(
                     )
                     pGuiGraphics.drawWordWrap(
                         font,
-                        FormattedText.of("DESCRIPTION: ${mcu.description}"),
+                        FormattedText.of("DESCRIPTION: $description"),
                         331 + 81,
                         17,
                         81,

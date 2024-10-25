@@ -27,7 +27,7 @@ data class FirmwareProgrammerAction(val flasherPos: BlockPos, val script: String
         )
     }
 
-    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
+    override fun type() = TYPE
 }
 
 data class FlashResult(val messageKey: String) : CustomPacketPayload {
@@ -40,7 +40,7 @@ data class FlashResult(val messageKey: String) : CustomPacketPayload {
         )
     }
 
-    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
+    override fun type() = TYPE
 }
 
 @Suppress("unused")
