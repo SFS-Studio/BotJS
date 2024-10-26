@@ -34,6 +34,11 @@ class Register(private val default: Int, private val rwFlag: RWFlag) {
 interface BotModule {
     companion object {
         val DUMMY_REGISTER = Register(0, Register.RWFlag.ReadOnly)
+
+        val DUMMY_MODULE = object: BotModule {
+            override fun register(address: Int) = DUMMY_REGISTER
+            override fun tick(bot: BotEntity) = Unit
+        }
     }
 
     fun register(address: Int): Register

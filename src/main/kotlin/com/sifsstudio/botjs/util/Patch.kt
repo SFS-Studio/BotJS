@@ -25,7 +25,7 @@ operator fun CompoundTag.set(key: String, value: ByteArray) = putByteArray(key, 
 fun String.asStringTag(): StringTag = StringTag.valueOf(this)
 
 // Context
-inline fun withContext(block: (Context) -> Unit) =
+inline fun withContextCatching(block: (Context) -> Unit) =
     runCatching {
         Context.enter().use {
             block(it)

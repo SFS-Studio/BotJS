@@ -110,16 +110,7 @@ class SerialComponent(private val runtime: BotRuntime, private val id: Int) : Sc
 
     override fun getDefaultValue(hint: Class<*>?) = "[object COM]"
 
-    override fun hasInstance(instance: Scriptable): Boolean {
-        var proto = instance.prototype
-        while (proto != null) {
-            if (proto.equals(this)) {
-                return true
-            }
-            proto = proto.prototype
-        }
-        return false
-    }
+    override fun hasInstance(instance: Scriptable) = ScriptRuntime.jsDelegatesTo(instance, this)
 
     private val bufferCtrl = Register(0, Register.RWFlag.ReadWrite)
     private val bufferDst = RegisterArray(Array(2) {
@@ -137,27 +128,26 @@ class SerialComponent(private val runtime: BotRuntime, private val id: Int) : Sc
      * The most bit controls read/write mode, so it reads into
      * buffers[i] or copies the data from buffers[i] into dst.
      */
-    fun tick() {
-        if (runtime == BotRuntime.DUMMY_RUNTIME) {
-            return
-        }
-        runtime.comConnectedModule(id)?.let { module ->
+    fun tick() = runtime
+        .takeIf { it != BotRuntime.DUMMY_RUNTIME }
+        ?.comConnectedModule(id)
+        ?.let { module ->
             for (i in 0..1) {
                 val enBitMask = 1 shl (i shl 1)
-                if (bufferCtrl.content and enBitMask == enBitMask) {
-                    val rwBitMask = 1 shl ((i shl 1) + 1)
-                    val register = module.register(bufferDst[i].content)
-                    when (bufferCtrl.content and rwBitMask) {
-                        0 -> {
-                            buffers[i].content = register.read()
-                        }
+                if (bufferCtrl.content and enBitMask != enBitMask) {
+                    continue
+                }
+                val rwBitMask = 1 shl ((i shl 1) + 1)
+                val register = module.register(bufferDst[i].content)
+                when (bufferCtrl.content and rwBitMask) {
+                    0 -> {
+                        buffers[i].content = register.read()
+                    }
 
-                        rwBitMask -> {
-                            register.write(buffers[i].content)
-                        }
+                    rwBitMask -> {
+                        register.write(buffers[i].content)
                     }
                 }
             }
         }
-    }
 }

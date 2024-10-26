@@ -13,7 +13,6 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.SoundType
-import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
 
@@ -24,9 +23,9 @@ class FirmwareProgrammer : BaseEntityBlock(Properties.of().noOcclusion().sound(S
         }
     }
 
-    override fun codec(): MapCodec<out BaseEntityBlock> = CODEC
+    override fun codec(): MapCodec<FirmwareProgrammer> = CODEC
 
-    override fun newBlockEntity(pPos: BlockPos, pState: BlockState): BlockEntity =
+    override fun newBlockEntity(pPos: BlockPos, pState: BlockState) =
         FirmwareProgrammerBlockEntity(pPos, pState)
 
     @Deprecated("")
