@@ -164,7 +164,7 @@ class InterruptibleContextFactory : ContextFactory() {
     }
 
     override fun observeInstructionCount(cx: Context, instructionCount: Int) {
-        if (Thread.currentThread().isInterrupted) {
+        if (Thread.interrupted()) {
             throw InterruptedException("interruption")
         }
     }

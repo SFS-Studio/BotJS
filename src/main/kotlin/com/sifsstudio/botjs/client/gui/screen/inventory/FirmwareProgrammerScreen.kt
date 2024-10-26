@@ -65,6 +65,7 @@ class FirmwareProgrammerScreen(
         return super.keyPressed(pKeyCode, pScanCode, pModifiers)
     }
 
+    @Suppress("MoveLambdaOutsideParentheses")
     override fun init() {
         val minecraft = minecraft!!
         minecraft.window.guiScale =
@@ -73,14 +74,16 @@ class FirmwareProgrammerScreen(
         height = minecraft.window.guiScaledHeight
         super.init()
         saveButton = addRenderableWidget(ImageButton(
-            leftPos + 320, topPos + 119, 20, 20, WidgetSprites(
+            leftPos + 320, topPos + 119, 20, 20,
+            WidgetSprites(
                 ResourceLocation(BotJS.ID, "widget/save_button"),
                 ResourceLocation(BotJS.ID, "widget/save_button_disabled"),
                 ResourceLocation(BotJS.ID, "widget/save_button_highlighted")
-            )
-        ) {
-            saveScript(false)
-        })
+            ),
+            {
+                saveScript(false)
+            },
+        ))
         saveButton.active = false
         scriptEdit = addRenderableWidget(
             ScriptEditBox(
@@ -144,30 +147,31 @@ class FirmwareProgrammerScreen(
 
     override fun renderLabels(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int) {
         super.renderLabels(pGuiGraphics, pMouseX, pMouseY)
+        if (!menu.getSlot(0).hasItem()) {
+            return
+        }
         val flashResult = flashResult
-        if (menu.getSlot(0).hasItem()) {
-            if (flashResult == null) {
-                (menu.getSlot(0).item.item as? McuItem)?.apply {
-                    pGuiGraphics.drawWordWrap(
-                        font,
-                        FormattedText.of("MCU: $chipCode\nPIN: $pins\nCOM: $serials"),
-                        331,
-                        17,
-                        78,
-                        4210752
-                    )
-                    pGuiGraphics.drawWordWrap(
-                        font,
-                        FormattedText.of("DESCRIPTION: $description"),
-                        331 + 81,
-                        17,
-                        81,
-                        4210752
-                    )
-                }
-            } else {
-                pGuiGraphics.drawWordWrap(font, flashResult, 331, 17, 162, 0xFFFF0000.toInt())
-            }
+        if (flashResult != null) {
+            pGuiGraphics.drawWordWrap(font, flashResult, 331, 17, 162, 0xFFFF0000.toInt())
+            return
+        }
+        (menu.getSlot(0).item.item as? McuItem)?.run {
+            pGuiGraphics.drawWordWrap(
+                font,
+                FormattedText.of("MCU: $chipCode\nPIN: $pins\nCOM: $serials"),
+                331,
+                17,
+                78,
+                4210752
+            )
+            pGuiGraphics.drawWordWrap(
+                font,
+                FormattedText.of("DESCRIPTION: $description"),
+                331 + 81,
+                17,
+                81,
+                4210752
+            )
         }
     }
 

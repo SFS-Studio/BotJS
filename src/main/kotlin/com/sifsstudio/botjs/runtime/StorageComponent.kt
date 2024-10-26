@@ -37,21 +37,21 @@ class StorageComponent(private val storage: IntArray): Scriptable {
 
     override fun delete(index: Int) = Unit
 
-    override fun getPrototype(): Scriptable? = prototype
+    override fun getPrototype() = prototype
 
     override fun setPrototype(prototype: Scriptable?) {
         this.prototype = prototype
     }
 
-    override fun getParentScope(): Scriptable? = parent
+    override fun getParentScope() = parent
 
     override fun setParentScope(parent: Scriptable?) {
         this.parent = parent
     }
 
-    override fun getIds(): Array<Any> = Array(0) {}
+    override fun getIds() = Array(0) {}
 
-    override fun getDefaultValue(hint: Class<*>?): Any = "[object Storage]"
+    override fun getDefaultValue(hint: Class<*>?) = "[object Storage]"
 
     override fun hasInstance(instance: Scriptable) = ScriptRuntime.jsDelegatesTo(instance, this)
 }

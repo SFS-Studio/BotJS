@@ -35,7 +35,7 @@ class RegisterArray(private val registers: Array<Register>) : Scriptable {
 
     override fun delete(name: String) = Unit
 
-    override fun delete(index: Int) = Unit
+    override fun delete(index: Int) = registers[index].reset()
 
     override fun getPrototype(): Scriptable? = prototype
 

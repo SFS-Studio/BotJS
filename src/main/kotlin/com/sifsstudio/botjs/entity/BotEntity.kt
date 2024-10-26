@@ -5,6 +5,7 @@ import com.sifsstudio.botjs.item.BotModuleItem
 import com.sifsstudio.botjs.item.Items
 import com.sifsstudio.botjs.runtime.BotRuntime
 import com.sifsstudio.botjs.util.isItem
+import com.sifsstudio.botjs.util.set
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
@@ -22,6 +23,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
 
     val runtime = BotRuntime()
     val modules = ItemStackHandler(9)
+    var needResume = false
 
     private fun recollectModule() {
         runtime.clearModule()
@@ -37,11 +39,9 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
     override fun addAdditionalSaveData(pCompound: CompoundTag) {
         super.addAdditionalSaveData(pCompound)
         if (!level().isClientSide) {
-            pCompound.put("runtime", runtime.serializeNBT(this.registryAccess()))
-            pCompound.put(
-                "modules",
-                modules.serializeNBT(this.registryAccess())
-            )
+            pCompound["runtime"] = runtime.serializeNBT(this.registryAccess())
+            pCompound["modules"] = modules.serializeNBT(this.registryAccess())
+            pCompound["need_resume"] = needResume
         }
     }
 
@@ -50,13 +50,18 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         if (!level().isClientSide) {
             runtime.deserializeNBT(this.registryAccess(), pCompound.getCompound("runtime"))
             modules.deserializeNBT(this.registryAccess(), pCompound.getCompound("modules"))
+            needResume = pCompound.getBoolean("need_resume")
         }
     }
 
     override fun onAddedToWorld() {
         super.onAddedToWorld()
-        if (!level().isClientSide) {
-            recollectModule()
+        if (level().isClientSide) {
+            return
+        }
+        recollectModule()
+        if (needResume) {
+            runtime.launch()
         }
     }
 
@@ -92,7 +97,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         return super.mobInteract(pPlayer, pHand)
     }
 
-    override fun createMenu(pContainerId: Int, pPlayerInventory: Inventory, pPlayer: Player): AbstractContainerMenu =
+    override fun createMenu(pContainerId: Int, pPlayerInventory: Inventory, pPlayer: Player) =
         BotMountMenu(
             pContainerId,
             pPlayerInventory,

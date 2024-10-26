@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 object ClientPayloadHandlers {
     fun handleFlashResult(payload: FlashResult, context: IPayloadContext) {
         context.enqueueWork {
-            (Minecraft.getInstance().screen as? FirmwareProgrammerScreen)?.apply {
+            (Minecraft.getInstance().screen as? FirmwareProgrammerScreen)?.run {
                 flashResult = Component.translatable(payload.messageKey)
             }
         }.exceptionally {
