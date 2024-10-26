@@ -73,10 +73,10 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
         }
     }
 
-    fun interrupt() {
-        runtimeFuture?.cancel(true)
+    fun interrupt() = runtimeFuture?.also {
+        it.cancel(true)
         runtimeFuture = null
-    }
+    } == null
 
     fun stop() {
         isRunning = false

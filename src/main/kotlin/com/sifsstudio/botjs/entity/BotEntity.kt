@@ -15,7 +15,6 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.items.ItemStackHandler
 
@@ -35,7 +34,6 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         }
     }
 
-    //TODO: Thread safety when unload
     override fun addAdditionalSaveData(pCompound: CompoundTag) {
         super.addAdditionalSaveData(pCompound)
         if (!level().isClientSide) {
@@ -68,7 +66,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
     override fun onRemovedFromWorld() {
         super.onRemovedFromWorld()
         if (!level().isClientSide) {
-            runtime.interrupt()
+            needResume = runtime.interrupt()
         }
     }
 
