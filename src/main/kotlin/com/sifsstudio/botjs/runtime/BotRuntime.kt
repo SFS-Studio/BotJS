@@ -2,6 +2,7 @@ package com.sifsstudio.botjs.runtime
 
 import com.sifsstudio.botjs.entity.BotEntity
 import com.sifsstudio.botjs.runtime.module.BotModule
+import com.sifsstudio.botjs.runtime.module.DUMMY_MODULE
 import com.sifsstudio.botjs.util.set
 import com.sifsstudio.botjs.util.withContextCatching
 import net.minecraft.core.HolderLookup
@@ -17,25 +18,34 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+//TODO: Storage data stored into an item?
+const val STORAGE_SIZE = 1
+
 class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
     var isRunning = false
         private set
     var script = ""
+
     private val modules = mutableListOf<BotModule>()
     private var runtimeFuture: Future<*>? = null
-    private val internalCOMs = Array(2) { SerialComponent(this, it) }
-    private val ioConnection = Array(2) { BotModule.DUMMY_MODULE }
+    private val internalCOMs = Array(2) { SerialComponent(2, this, it) }
+    private val ioConnection = Array(2) { DUMMY_MODULE }
+    private val storage = StorageComponent(2, IntArray(STORAGE_SIZE))
     private val syncTickLock = ReentrantLock()
     private val syncTickCondition = syncTickLock.newCondition()
 
     override fun serializeNBT(provider: HolderLookup.Provider) = CompoundTag().apply {
         this["script"] = script
         this["running"] = isRunning
+        this["storage"] = storage.storage
     }
 
     override fun deserializeNBT(provider: HolderLookup.Provider, nbt: CompoundTag) {
         script = nbt.getString("script")
         isRunning = nbt.getBoolean("running")
+        val array = nbt.getIntArray("storage")
+        check(array.size == STORAGE_SIZE)
+        System.arraycopy(array, 0, storage.storage, 0, STORAGE_SIZE)
     }
 
     fun launch() {
@@ -47,6 +57,7 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
                     //Avoid redundant initialization
                     //ctx.initSafeStandardObjects(this)
                     NativeRegUtils.init(this, false)
+                    defineProperty("storage", storage, READONLY or PERMANENT)
                     defineProperty("COM0", internalCOMs[0], READONLY or PERMANENT)
                     defineProperty("COM1", internalCOMs[1], READONLY or PERMANENT)
                     put(
@@ -93,7 +104,7 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
     }
 
     fun comConnectedModule(id: Int) = ioConnection[id]
-        .takeIf { it != BotModule.DUMMY_MODULE }
+        .takeIf { it != DUMMY_MODULE }
 
     fun tick(bot: BotEntity) {
         if (!isRunning) {

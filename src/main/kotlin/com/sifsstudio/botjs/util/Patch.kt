@@ -19,6 +19,7 @@ infix fun BlockState.isBlock(block: Block) = `is`(block)
 operator fun CompoundTag.set(key: String, value: Tag) = put(key, value)
 operator fun CompoundTag.set(key: String, value: String) = putString(key, value)
 operator fun CompoundTag.set(key: String, value: Boolean) = putBoolean(key, value)
+operator fun CompoundTag.set(key: String, value: IntArray) = putIntArray(key, value)
 operator fun CompoundTag.set(key: String, value: ByteArray) = putByteArray(key, value)
 
 // String

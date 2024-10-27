@@ -73,6 +73,7 @@ class FirmwareProgrammerScreen(
         width = minecraft.window.guiScaledWidth
         height = minecraft.window.guiScaledHeight
         super.init()
+
         saveButton = addRenderableWidget(ImageButton(
             leftPos + 320, topPos + 119, 20, 20,
             WidgetSprites(
@@ -85,6 +86,7 @@ class FirmwareProgrammerScreen(
             },
         ))
         saveButton.active = false
+
         scriptEdit = addRenderableWidget(
             ScriptEditBox(
                 font,
@@ -97,19 +99,26 @@ class FirmwareProgrammerScreen(
             )
         ).apply { setValueListener { saveButton.active = true } }
         scriptEdit.value = menu.script
+
         cancelButton = addRenderableWidget(ImageButton(
-            leftPos + 493, topPos + 5, 14, 14, WidgetSprites(
+            leftPos + 493, topPos + 5, 14, 14,
+            WidgetSprites(
                 ResourceLocation("widget/cross_button"),
                 ResourceLocation("widget/cross_button_highlighted")
-            )
-        ) {
-            minecraft.player?.closeContainer()
-        })
+            ),
+            {
+                minecraft.player?.closeContainer()
+            },
+        ))
+
         flashButton =
-            addRenderableWidget(Button.builder(Component.translatable("menu.botjs.firmware_programmer.flash")) {
-                saveScript(true)
-                flashButton.isFocused = false
-            }.pos(leftPos + 381, topPos + 175).size(35, 17).build())
+            addRenderableWidget(Button.builder(
+                Component.translatable("menu.botjs.firmware_programmer.flash"),
+                {
+                    saveScript(true)
+                    flashButton.isFocused = false
+                },
+            ).pos(leftPos + 381, topPos + 175).size(35, 17).build())
     }
 
     override fun removed() {
