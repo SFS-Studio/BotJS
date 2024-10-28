@@ -19,10 +19,10 @@ object BlockEntities {
             )
         })
 
-    val BOT_ASSEMBLER: BlockEntityType<BotAssemblerEntity> by REGISTRY.register(
+    val BOT_ASSEMBLER: BlockEntityType<BotAssemblerBlockEntity> by REGISTRY.register(
         "bot_assembler",
         Supplier {
-            BlockEntityType.Builder.of(::BotAssemblerEntity).build(
+            BlockEntityType.Builder.of(::BotAssemblerBlockEntity).build(
                 suppressNullCheck()
             )
         }

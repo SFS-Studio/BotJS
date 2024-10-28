@@ -3,18 +3,15 @@ package com.sifsstudio.botjs.runtime
 import com.sifsstudio.botjs.entity.BotEntity
 import com.sifsstudio.botjs.runtime.module.BotModule
 import com.sifsstudio.botjs.runtime.module.DUMMY_MODULE
+import com.sifsstudio.botjs.runtime.threading.RUNTIME_EXECUTOR
 import com.sifsstudio.botjs.util.set
 import com.sifsstudio.botjs.util.withContextCatching
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.neoforged.neoforge.common.util.INBTSerializable
-import net.neoforged.neoforge.event.server.ServerStartingEvent
 import org.mozilla.javascript.*
 import java.lang.reflect.Member
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -49,7 +46,7 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
     }
 
     fun launch() {
-        runtimeFuture = EXECUTOR.submit {
+        runtimeFuture = RUNTIME_EXECUTOR.submit {
             isRunning = true
             InterruptibleContextFactory.init()
             withContextCatching { ctx ->
@@ -126,22 +123,14 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
         syncTickCondition.await()
     }
 
-    companion object {
-        private val SYNC_TICK_METHOD = BotRuntime::class.java.getMethod("syncTick")
-        private val BOT_THREAD_ID = AtomicInteger(0)
-        lateinit var EXECUTOR: ExecutorService
-        fun onServerStarting(@Suppress("UNUSED_PARAMETER") event: ServerStartingEvent) {
-            EXECUTOR =
-                Executors.newCachedThreadPool {
-                    Thread.ofVirtual().name("BotJS-BotThread-" + BOT_THREAD_ID.getAndIncrement()).unstarted(it)
-                }
-        }
-
-        val DUMMY_RUNTIME = BotRuntime()
-    }
-
     override fun getClassName(): String = javaClass.name
+
 }
+
+private val SYNC_TICK_METHOD = BotRuntime::class.java.getMethod("syncTick")
+
+@Suppress("UNUSED")
+val DUMMY_RUNTIME = BotRuntime()
 
 class ExposedFunction(name: String, methodOrConstructor: Member, scope: Scriptable) : FunctionObject(
     name,

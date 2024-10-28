@@ -1,7 +1,7 @@
 package com.sifsstudio.botjs.block
 
 import com.mojang.serialization.MapCodec
-import com.sifsstudio.botjs.blockentity.BotAssemblerEntity
+import com.sifsstudio.botjs.blockentity.BotAssemblerBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.SoundType
@@ -16,5 +16,5 @@ class BotAssembler : BaseEntityBlock(Properties.of().noOcclusion().sound(SoundTy
 
     override fun codec(): MapCodec<BotAssembler> = CODEC
 
-    override fun newBlockEntity(pPos: BlockPos, pState: BlockState) = BotAssemblerEntity(pPos, pState)
+    override fun newBlockEntity(pPos: BlockPos, pState: BlockState) = BotAssemblerBlockEntity(pPos, pState)
 }

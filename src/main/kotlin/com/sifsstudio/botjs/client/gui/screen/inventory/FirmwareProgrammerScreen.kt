@@ -1,6 +1,7 @@
 package com.sifsstudio.botjs.client.gui.screen.inventory
 
 import com.sifsstudio.botjs.BotJS
+import com.sifsstudio.botjs.blockentity.FirmwareProgrammerBlockEntity
 import com.sifsstudio.botjs.client.gui.screen.widget.ScriptEditBox
 import com.sifsstudio.botjs.inventory.FirmwareProgrammerMenu
 import com.sifsstudio.botjs.item.McuItem
@@ -56,6 +57,12 @@ class FirmwareProgrammerScreen(
         return i
     }
 
+    private fun findBlockEntity(): FirmwareProgrammerBlockEntity? {
+        val mc = minecraft!!
+        val be = mc.level!!.getBlockEntity(menu.flasherPos) as? FirmwareProgrammerBlockEntity
+        return be
+    }
+
     override fun keyPressed(pKeyCode: Int, pScanCode: Int, pModifiers: Int): Boolean {
         if (pKeyCode == GLFW.GLFW_KEY_E) {
             if (scriptEdit.charTyped('e', pModifiers)) {
@@ -73,6 +80,14 @@ class FirmwareProgrammerScreen(
         width = minecraft.window.guiScaledWidth
         height = minecraft.window.guiScaledHeight
         super.init()
+
+        val be = findBlockEntity()
+        if(be == null) {
+            //TODO: Maybe I shouldn't close it right now
+            minecraft.setScreen(null)
+            return
+        }
+        be.outputHandler = { flashResult = it }
 
         saveButton = addRenderableWidget(ImageButton(
             leftPos + 320, topPos + 119, 20, 20,
@@ -126,6 +141,7 @@ class FirmwareProgrammerScreen(
         minecraft.window.guiScale =
             minecraft.window.calculateScale(minecraft.options.guiScale().get(), minecraft.isEnforceUnicode).toDouble()
         super.removed()
+        findBlockEntity()?.outputHandler = null
     }
 
     override fun containerTick() {

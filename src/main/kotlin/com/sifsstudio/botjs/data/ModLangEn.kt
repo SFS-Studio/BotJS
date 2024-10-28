@@ -22,9 +22,13 @@ class ModLangEn(packOutput: PackOutput) : LanguageProvider(packOutput, BotJS.ID,
             "menu.botjs.firmware_programmer.title" to "Firmware Programmer",
             "menu.botjs.firmware_programmer.script_here" to "Script Here...",
             "menu.botjs.firmware_programmer.flash" to "Flash",
-            "menu.botjs.firmware_programmer.flash_result.output_occupied" to "Output slot is occupied!",
-            "menu.botjs.firmware_programmer.flash_result.nothing_to_flash" to "No MCU found in input slot!",
-            "toast.botjs.flash_failed" to "Failed to flash the MCU!"
+            "menu.botjs.firmware_programmer.flash.output_occupied" to "Output slot is occupied!",
+            "menu.botjs.firmware_programmer.flash.nothing_to_flash" to "No MCU found in input slot!",
+            "menu.botjs.firmware_programmer.flash.compile_error" to "Compile error: %1\$s",
+            "menu.botjs.firmware_programmer.flash.already_in_progress" to "Already flashing MCU!",
+            "menu.botjs.firmware_programmer.flash.executing" to "Flashing",
+            "menu.botjs.firmware_programmer.flash.success" to "Flush success",
+            "toast.botjs.flash_failed" to "Failed to flash the MCU!",
         )
     }
 

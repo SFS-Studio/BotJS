@@ -5,7 +5,8 @@ import com.sifsstudio.botjs.blockentity.BlockEntities
 import com.sifsstudio.botjs.entity.Entities
 import com.sifsstudio.botjs.inventory.MenuTypes
 import com.sifsstudio.botjs.item.Items
-import com.sifsstudio.botjs.runtime.BotRuntime
+import com.sifsstudio.botjs.runtime.threading.onServerStarting
+import com.sifsstudio.botjs.runtime.threading.onServerStopped
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.CreativeModeTab
@@ -20,6 +21,8 @@ import java.util.function.Supplier
 object BotJS {
     const val ID = "botjs"
     private val CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID)
+
+    @Suppress("UNUSED")
     private val BOTJS_CREATIVE_TAB = CREATIVE_TABS.register("botjs", Supplier {
         CreativeModeTab.builder()
             .title(Component.translatable("item_group.$ID"))
@@ -42,6 +45,7 @@ object BotJS {
         Entities.REGISTRY.register(MOD_BUS)
         BlockEntities.REGISTRY.register(MOD_BUS)
         MenuTypes.REGISTRY.register(MOD_BUS)
-        FORGE_BUS.addListener(BotRuntime.Companion::onServerStarting)
+        FORGE_BUS.addListener(::onServerStarting)
+        FORGE_BUS.addListener(::onServerStopped)
     }
 }

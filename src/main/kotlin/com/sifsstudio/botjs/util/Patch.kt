@@ -1,3 +1,4 @@
+@file: Suppress("UNUSED")
 package com.sifsstudio.botjs.util
 
 import net.minecraft.nbt.*
@@ -26,7 +27,7 @@ operator fun CompoundTag.set(key: String, value: ByteArray) = putByteArray(key, 
 fun String.asStringTag(): StringTag = StringTag.valueOf(this)
 
 // Context
-inline fun withContextCatching(block: (Context) -> Unit) =
+inline fun<T> withContextCatching(block: (Context) -> T) =
     runCatching {
         Context.enter().use {
             block(it)

@@ -11,14 +11,12 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.MenuProvider
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.neoforged.neoforge.items.ItemStackHandler
 
-class BotAssemblerEntity(pPos: BlockPos, pBlockState: BlockState) :
-    BlockEntity(BlockEntities.BOT_ASSEMBLER, pPos, pBlockState), MenuProvider {
+class BotAssemblerBlockEntity(pPos: BlockPos, pBlockState: BlockState) :
+    BaseBlockEntity(BlockEntities.BOT_ASSEMBLER, pPos, pBlockState), MenuProvider {
     val mcu = object : ItemStackHandler(1) {
         override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
             return stack.item is McuItem
@@ -49,8 +47,14 @@ class BotAssemblerEntity(pPos: BlockPos, pBlockState: BlockState) :
         components.deserializeNBT(pRegistries, pTag.getCompound("components"))
     }
 
-    override fun createMenu(pContainerId: Int, pPlayerInventory: Inventory, pPlayer: Player): AbstractContainerMenu =
+    override fun createMenu(pContainerId: Int, pPlayerInventory: Inventory, pPlayer: Player) =
         BotAssemblerMenu(pContainerId, pPlayerInventory, mcu, storage, components)
 
     override fun getDisplayName(): Component = Component.translatable("menu.botjs.bot_assembler.title")
+
+    override val sync = false
+
+    override fun getUpdateTag(pRegistries: HolderLookup.Provider) = CompoundTag()
+
+    override fun handleUpdateTag(tag: CompoundTag, lookupProvider: HolderLookup.Provider) {}
 }
