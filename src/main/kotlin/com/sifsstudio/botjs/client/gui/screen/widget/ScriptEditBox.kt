@@ -3,7 +3,7 @@ package com.sifsstudio.botjs.client.gui.screen.widget
 import net.minecraft.Util
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.components.AbstractScrollWidget
+import net.minecraft.client.gui.components.AbstractTextAreaWidget
 import net.minecraft.client.gui.components.MultilineTextField
 import net.minecraft.client.gui.components.Whence
 import net.minecraft.client.gui.narration.NarratedElementType
@@ -26,7 +26,7 @@ class ScriptEditBox(
     pHeight: Int,
     private val placeholder: Component,
     pMessage: Component
-) : AbstractScrollWidget(pX, pY, pWidth, pHeight, pMessage) {
+) : AbstractTextAreaWidget(pX, pY, pWidth, pHeight, pMessage) {
     private var textField: MultilineTextField = MultilineTextField(font, pWidth - totalInnerPadding())
     private var focusedTime = Util.getMillis()
     var value: String
@@ -297,4 +297,7 @@ class ScriptEditBox(
     private fun renderHighlight(pGuiGraphics: GuiGraphics, pMinX: Int, pMinY: Int, pMaxX: Int, pMaxY: Int) {
         pGuiGraphics.fill(RenderType.guiTextHighlight(), pMinX, pMinY, pMaxX, pMaxY, -16776961)
     }
+
+    private fun withinContentAreaPoint(pMouseX: Double, pMouseY: Double)
+        = pMouseX >= innerLeft && pMouseX <= x + width - innerPadding() && pMouseY >= innerTop && pMouseY <= y + height - innerPadding()
 }

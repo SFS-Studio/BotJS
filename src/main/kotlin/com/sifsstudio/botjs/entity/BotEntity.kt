@@ -52,8 +52,8 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         }
     }
 
-    override fun onAddedToWorld() {
-        super.onAddedToWorld()
+    override fun onAddedToLevel() {
+        super.onAddedToLevel()
         if (level().isClientSide) {
             return
         }
@@ -63,8 +63,8 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         }
     }
 
-    override fun onRemovedFromWorld() {
-        super.onRemovedFromWorld()
+    override fun onRemovedFromLevel() {
+        super.onRemovedFromLevel()
         if (!level().isClientSide) {
             needResume = runtime.interrupt()
         }

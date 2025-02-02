@@ -9,7 +9,7 @@ sealed class PinFunction {
     data object GPIO : PinFunction()
 }
 
-abstract class McuItem : Item(Properties().stacksTo(1)) {
+abstract class McuItem(properties: Properties) : Item(properties) {
     abstract val chipCode: String
     abstract val pins: UShort
     abstract val serials: UShort
@@ -21,12 +21,13 @@ abstract class McuItem : Item(Properties().stacksTo(1)) {
             DataComponentType.builder<String>().persistent(Codec.STRING).build()
 
         fun of(
+            properties: Properties,
             pins: UShort,
             serials: UShort,
             chipCode: String,
             description: String,
             pinFunction: (UShort) -> PinFunction
-        ) = object : McuItem() {
+        ) = object : McuItem(properties) {
             override val pins = pins
             override val serials = serials
             override val chipCode = chipCode

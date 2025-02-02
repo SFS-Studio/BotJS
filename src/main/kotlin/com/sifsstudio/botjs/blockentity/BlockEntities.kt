@@ -1,7 +1,7 @@
 package com.sifsstudio.botjs.blockentity
 
 import com.sifsstudio.botjs.BotJS
-import com.sifsstudio.botjs.util.suppressNullCheck
+import com.sifsstudio.botjs.block.Blocks
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.neoforged.neoforge.registries.DeferredRegister
@@ -14,17 +14,14 @@ object BlockEntities {
     val FIRMWARE_PROGRAMMER: BlockEntityType<FirmwareProgrammerBlockEntity> by REGISTRY.register(
         "firmware_programmer",
         Supplier {
-            BlockEntityType.Builder.of(::FirmwareProgrammerBlockEntity).build(
-                suppressNullCheck()
-            )
-        })
+            BlockEntityType(::FirmwareProgrammerBlockEntity, Blocks.FIRMWARE_PROGRAMMER)
+        }
+    )
 
     val BOT_ASSEMBLER: BlockEntityType<BotAssemblerBlockEntity> by REGISTRY.register(
         "bot_assembler",
         Supplier {
-            BlockEntityType.Builder.of(::BotAssemblerBlockEntity).build(
-                suppressNullCheck()
-            )
+            BlockEntityType(::BotAssemblerBlockEntity, Blocks.BOT_ASSEMBLER)
         }
     )
 }

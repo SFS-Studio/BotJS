@@ -1,10 +1,13 @@
 plugins {
     id 'java-library'
-    id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.124'
+    id 'net.neoforged.moddev' version '2.0.76'
     id 'org.jetbrains.kotlin.jvm'
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
 }
 
 version = mod_version
@@ -23,83 +26,94 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
-//minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
+neoForge {
+    version = project.neo_version
 
-jarJar.enable()
+    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+    //minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
 
-configurations {
-    libraries {}
-    implementation.extendsFrom libraries
-    runtimeClasspath.extendsFrom localRuntime
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            programArgument '--nogui'
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        clientData {
+            clientData()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
-runs {
-    configureEach {
-        systemProperty 'forge.logging.markers', 'REGISTRIES'
-
-        systemProperty 'forge.logging.console.level', 'debug'
-
-        modSource project.sourceSets.main
-    }
-
-    client {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        dependencies {
-            runtime project.configurations.libraries
-        }
-    }
-
-    server {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        dependencies {
-            runtime project.configurations.libraries
-        }
-        programArgument '--nogui'
-    }
-
-    gameTestServer {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        dependencies {
-            runtime project.configurations.libraries
-        }
-    }
-
-    data {
-        programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        dependencies {
-            runtime project.configurations.libraries
-        }
-    }
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
-    implementation "net.neoforged:neoforge:${neo_version}"
-    implementation 'thedarkcolour:kotlinforforge-neoforge:5.1.0'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'thedarkcolour:kotlinforforge-neoforge:5.6.0'
 
-    libraries(jarJar(group: "org.mozilla", name: "rhino", version:"[1.7.15,1.8)"))
+    implementation(jarJar("org.mozilla:rhino") {
+        version {
+            strictly '[1.7.14, 1.9)'
+            prefer '1.8.0'
+        }
+    })
+    additionalRuntimeClasspath(group: "org.mozilla", name: "rhino", version: "1.8.0")
 }
 
-tasks.withType(ProcessResources).configureEach {
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
-            minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
-            neo_version         : neo_version, neo_version_range: neo_version_range,
-            loader_version_range: loader_version_range,
-            mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-            mod_authors         : mod_authors, mod_description: mod_description,
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
     ]
     inputs.properties replaceProperties
-
-    filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties + [project: project]
-    }
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
 }
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
 
 publishing {
     publications {

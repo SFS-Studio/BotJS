@@ -5,5 +5,5 @@ import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.resources.ResourceLocation
 
 object BotJSModelLayers {
-    val BOT = ModelLayerLocation(ResourceLocation(BotJS.ID, "bot"), "main")
+    val BOT = ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "bot"), "main")
 }

@@ -15,7 +15,7 @@ data class FirmwareProgrammerAction(val flasherPos: BlockPos, val script: String
     CustomPacketPayload {
     companion object {
         val TYPE =
-            CustomPacketPayload.Type<FirmwareProgrammerAction>(ResourceLocation(BotJS.ID, "firmware_programmer_action"))
+            CustomPacketPayload.Type<FirmwareProgrammerAction>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "firmware_programmer_action"))
         val CODEC: StreamCodec<ByteBuf, FirmwareProgrammerAction> = StreamCodec.composite(
             BlockPos.STREAM_CODEC,
             FirmwareProgrammerAction::flasherPos,
@@ -32,7 +32,7 @@ data class FirmwareProgrammerAction(val flasherPos: BlockPos, val script: String
 
 data class FlashResult(val messageKey: String) : CustomPacketPayload {
     companion object {
-        val TYPE = CustomPacketPayload.Type<FlashResult>(ResourceLocation(BotJS.ID, "flash_result"))
+        val TYPE = CustomPacketPayload.Type<FlashResult>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "flash_result"))
         val CODEC: StreamCodec<ByteBuf, FlashResult> = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8,
             FlashResult::messageKey,

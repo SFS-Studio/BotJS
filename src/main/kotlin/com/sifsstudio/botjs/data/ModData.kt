@@ -9,12 +9,10 @@ import net.neoforged.neoforge.data.event.GatherDataEvent
 @EventBusSubscriber(modid = BotJS.ID, bus = EventBusSubscriber.Bus.MOD)
 object ModData {
     @SubscribeEvent
-    fun gatherData(event: GatherDataEvent) {
+    fun gatherData(event: GatherDataEvent.Client) {
         val gen = event.generator
 
-        gen.addProvider<ModItemModels>(event.includeClient()) {
-            ModItemModels(it, event.existingFileHelper)
-        }
-        gen.addProvider(event.includeClient(), ::ModLangEn)
+        gen.addProvider(event.includeDev(), ::ModItemModels)
+        gen.addProvider(event.includeDev(), ::ModLangEn)
     }
 }

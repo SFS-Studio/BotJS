@@ -12,15 +12,12 @@ import net.minecraft.world.SimpleMenuProvider
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.BaseEntityBlock
-import net.minecraft.world.level.block.SoundType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
 
-class FirmwareProgrammer : BaseEntityBlock(Properties.of().noOcclusion().sound(SoundType.METAL)) {
+class FirmwareProgrammer(properties: Properties) : BaseEntityBlock(properties) {
     companion object {
-        private val CODEC = simpleCodec {
-            FirmwareProgrammer()
-        }
+        private val CODEC = simpleCodec(::FirmwareProgrammer)
     }
 
     override fun codec(): MapCodec<FirmwareProgrammer> = CODEC
@@ -63,6 +60,6 @@ class FirmwareProgrammer : BaseEntityBlock(Properties.of().noOcclusion().sound(S
                 }
             }
         }
-        return InteractionResult.sidedSuccess(pLevel.isClientSide)
+        return InteractionResult.SUCCESS_SERVER
     }
 }

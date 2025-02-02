@@ -12,6 +12,7 @@ import net.minecraft.client.gui.components.ImageButton
 import net.minecraft.client.gui.components.WidgetSprites
 import net.minecraft.client.gui.components.toasts.SystemToast
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.FormattedText
 import net.minecraft.resources.ResourceLocation
@@ -40,7 +41,7 @@ class FirmwareProgrammerScreen(
     }
 
     companion object {
-        private val TEXTURE = ResourceLocation(BotJS.ID, "textures/gui/firmware_programmer.png")
+        private val TEXTURE = ResourceLocation.fromNamespaceAndPath(BotJS.ID, "textures/gui/firmware_programmer.png")
     }
 
     private fun calculateGuiScale(pGuiScale: Int, pForceUnicode: Boolean): Int {
@@ -92,9 +93,9 @@ class FirmwareProgrammerScreen(
         saveButton = addRenderableWidget(ImageButton(
             leftPos + 320, topPos + 119, 20, 20,
             WidgetSprites(
-                ResourceLocation(BotJS.ID, "widget/save_button"),
-                ResourceLocation(BotJS.ID, "widget/save_button_disabled"),
-                ResourceLocation(BotJS.ID, "widget/save_button_highlighted")
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/save_button"),
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/save_button_disabled"),
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/save_button_highlighted")
             ),
             {
                 saveScript(false)
@@ -118,8 +119,8 @@ class FirmwareProgrammerScreen(
         cancelButton = addRenderableWidget(ImageButton(
             leftPos + 493, topPos + 5, 14, 14,
             WidgetSprites(
-                ResourceLocation("widget/cross_button"),
-                ResourceLocation("widget/cross_button_highlighted")
+                ResourceLocation.withDefaultNamespace("widget/cross_button"),
+                ResourceLocation.withDefaultNamespace("widget/cross_button_highlighted")
             ),
             {
                 minecraft.player?.closeContainer()
@@ -148,7 +149,7 @@ class FirmwareProgrammerScreen(
         super.containerTick()
         flashResult?.let { res ->
             minecraft?.let {
-                it.toasts.addToast(
+                it.toastManager.addToast(
                     SystemToast.multiline(
                         it,
                         SystemToast.SystemToastId(5000),
@@ -167,7 +168,7 @@ class FirmwareProgrammerScreen(
     }
 
     override fun renderBg(pGuiGraphics: GuiGraphics, pPartialTick: Float, pMouseX: Int, pMouseY: Int) {
-        pGuiGraphics.blit(TEXTURE, leftPos, topPos, 0.0f, 0.0f, imageWidth, imageHeight, imageWidth, imageHeight)
+        pGuiGraphics.blit(RenderType.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0f, 0.0f, imageWidth, imageHeight, imageWidth, imageHeight)
     }
 
     override fun renderLabels(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int) {
