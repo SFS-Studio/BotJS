@@ -1,7 +1,5 @@
 package com.sifsstudio.botjs.item
 
-import com.mojang.serialization.Codec
-import net.minecraft.core.component.DataComponentType
 import net.minecraft.world.item.Item
 
 sealed class PinFunction {
@@ -17,9 +15,6 @@ abstract class McuItem(properties: Properties) : Item(properties) {
     abstract fun pinFunction(pin: UShort): PinFunction
 
     companion object {
-        val SCRIPT_COMPONENT: DataComponentType<String> =
-            DataComponentType.builder<String>().persistent(Codec.STRING).build()
-
         fun of(
             properties: Properties,
             pins: UShort,

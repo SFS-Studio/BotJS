@@ -4,19 +4,19 @@ import com.sifsstudio.botjs.BotJS
 import com.sifsstudio.botjs.blockentity.FirmwareProgrammerBlockEntity
 import com.sifsstudio.botjs.client.gui.screen.widget.ScriptEditBox
 import com.sifsstudio.botjs.inventory.FirmwareProgrammerMenu
-import com.sifsstudio.botjs.item.McuItem
-import com.sifsstudio.botjs.network.FirmwareProgrammerAction
+import com.sifsstudio.botjs.item.component.DataComponents
+import com.sifsstudio.botjs.network.FlashMCU
+import com.sifsstudio.botjs.network.SyncScript
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.ImageButton
 import net.minecraft.client.gui.components.WidgetSprites
-import net.minecraft.client.gui.components.toasts.SystemToast
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.FormattedText
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.item.ItemStack
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.api.distmarker.OnlyIn
 import net.neoforged.neoforge.network.PacketDistributor
@@ -30,8 +30,6 @@ class FirmwareProgrammerScreen(
     private lateinit var scriptEdit: ScriptEditBox
     private lateinit var flashButton: Button
     private lateinit var saveButton: Button
-    private lateinit var cancelButton: Button
-    var flashResult: Component? = null
 
     init {
         imageWidth = 512
@@ -58,17 +56,14 @@ class FirmwareProgrammerScreen(
         return i
     }
 
-    private fun findBlockEntity(): FirmwareProgrammerBlockEntity? {
-        val mc = minecraft!!
-        val be = mc.level!!.getBlockEntity(menu.flasherPos) as? FirmwareProgrammerBlockEntity
-        return be
-    }
-
     override fun keyPressed(pKeyCode: Int, pScanCode: Int, pModifiers: Int): Boolean {
         if (pKeyCode == GLFW.GLFW_KEY_E) {
-            if (scriptEdit.charTyped('e', pModifiers)) {
+            if (scriptEdit.canTypeChar('e')) {
                 return true
             }
+        } else if (pKeyCode == GLFW.GLFW_KEY_S && pModifiers.or(GLFW.GLFW_MOD_CONTROL) == GLFW.GLFW_MOD_CONTROL) {
+            syncScript()
+            return true
         }
         return super.keyPressed(pKeyCode, pScanCode, pModifiers)
     }
@@ -82,13 +77,11 @@ class FirmwareProgrammerScreen(
         height = minecraft.window.guiScaledHeight
         super.init()
 
-        val be = findBlockEntity()
-        if(be == null) {
-            //TODO: Maybe I shouldn't close it right now
-            minecraft.setScreen(null)
-            return
-        }
-        be.outputHandler = { flashResult = it }
+        val be : FirmwareProgrammerBlockEntity? = menu.containerLevelAccess.evaluate { level, pos ->
+            level.getBlockEntity(pos)
+        }.orElse(null) as FirmwareProgrammerBlockEntity?
+
+        be ?: return minecraft.setScreen(null)
 
         saveButton = addRenderableWidget(ImageButton(
             leftPos + 320, topPos + 119, 20, 20,
@@ -98,7 +91,7 @@ class FirmwareProgrammerScreen(
                 ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/save_button_highlighted")
             ),
             {
-                saveScript(false)
+                syncScript()
             },
         ))
         saveButton.active = false
@@ -114,27 +107,22 @@ class FirmwareProgrammerScreen(
                 Component.translatable("gui.abuseReport.comments")
             )
         ).apply { setValueListener { saveButton.active = true } }
-        scriptEdit.value = menu.script
+        scriptEdit.value = be.script.getStackInSlot(0).get(DataComponents.SCRIPT) ?: ""
 
-        cancelButton = addRenderableWidget(ImageButton(
-            leftPos + 493, topPos + 5, 14, 14,
+        flashButton = addRenderableWidget(ImageButton(
+            leftPos + 391, topPos + 161, 11, 7,
             WidgetSprites(
-                ResourceLocation.withDefaultNamespace("widget/cross_button"),
-                ResourceLocation.withDefaultNamespace("widget/cross_button_highlighted")
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/pcb_button"),
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/pcb_button_disabled"),
+                ResourceLocation.fromNamespaceAndPath(BotJS.ID, "widget/pcb_button_highlighted")
             ),
             {
-                minecraft.player?.closeContainer()
+                // save before flash
+                syncScript()
+                PacketDistributor.sendToServer(FlashMCU(menu.session, menu.pos))
+                flashButton.isFocused = false
             },
         ))
-
-        flashButton =
-            addRenderableWidget(Button.builder(
-                Component.translatable("menu.botjs.firmware_programmer.flash"),
-                {
-                    saveScript(true)
-                    flashButton.isFocused = false
-                },
-            ).pos(leftPos + 381, topPos + 175).size(35, 17).build())
     }
 
     override fun removed() {
@@ -142,24 +130,24 @@ class FirmwareProgrammerScreen(
         minecraft.window.guiScale =
             minecraft.window.calculateScale(minecraft.options.guiScale().get(), minecraft.isEnforceUnicode).toDouble()
         super.removed()
-        findBlockEntity()?.outputHandler = null
+        // commented because one may discard changes by intentionally closing the interface
+//        // ensure script synced
+//        PacketDistributor.sendToServer(
+//            SyncScript(menu.session, scriptEdit.value, menu.pos)
+//        )
     }
 
     override fun containerTick() {
         super.containerTick()
-        flashResult?.let { res ->
-            minecraft?.let {
-                it.toastManager.addToast(
-                    SystemToast.multiline(
-                        it,
-                        SystemToast.SystemToastId(5000),
-                        Component.translatable("toast.botjs.flash_failed"),
-                        res
-                    )
-                )
-            }
-            this.flashResult = null
-        }
+        // two things to do: check synced and sync if not
+        val minecraft = minecraft!!
+        val be : FirmwareProgrammerBlockEntity? = menu.containerLevelAccess.evaluate { level, pos ->
+            level.getBlockEntity(pos)
+        }.orElse(null) as FirmwareProgrammerBlockEntity?
+        be ?: return minecraft.setScreen(null)
+        saveButton.active =
+            be.script.getStackInSlot(0) != ItemStack.EMPTY
+                    && be.script.getStackInSlot(0).get(DataComponents.SCRIPT) != scriptEdit.value
     }
 
     override fun render(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int, pPartialTick: Float) {
@@ -172,37 +160,20 @@ class FirmwareProgrammerScreen(
     }
 
     override fun renderLabels(pGuiGraphics: GuiGraphics, pMouseX: Int, pMouseY: Int) {
-        super.renderLabels(pGuiGraphics, pMouseX, pMouseY)
-        if (!menu.getSlot(0).hasItem()) {
-            return
-        }
-        val flashResult = flashResult
-        if (flashResult != null) {
-            pGuiGraphics.drawWordWrap(font, flashResult, 331, 17, 162, 0xFFFF0000.toInt())
-            return
-        }
-        (menu.getSlot(0).item.item as? McuItem)?.run {
-            pGuiGraphics.drawWordWrap(
-                font,
-                FormattedText.of("MCU: $chipCode\nPIN: $pins\nCOM: $serials"),
-                331,
-                17,
-                78,
-                4210752
-            )
-            pGuiGraphics.drawWordWrap(
-                font,
-                FormattedText.of("DESCRIPTION: $description"),
-                331 + 81,
-                17,
-                81,
-                4210752
-            )
-        }
+        // omit super call, no inventory tip
+        pGuiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false)
+        val minecraft = minecraft!!
+        val be : FirmwareProgrammerBlockEntity? = menu.containerLevelAccess.evaluate { level, pos ->
+            level.getBlockEntity(pos)
+        }.orElse(null) as FirmwareProgrammerBlockEntity?
+        be ?: return minecraft.setScreen(null)
+        val compileResult = be.compileResult
+        pGuiGraphics.drawWordWrap(font, compileResult, 331, 17, 162, 0xFFFF0000.toInt())
     }
 
-    private fun saveScript(flash: Boolean) {
-        PacketDistributor.sendToServer(FirmwareProgrammerAction(menu.flasherPos, scriptEdit.value, flash))
-        saveButton.active = false
+    private fun syncScript() {
+        PacketDistributor.sendToServer(
+            SyncScript(menu.session, scriptEdit.value, menu.pos)
+        )
     }
 }

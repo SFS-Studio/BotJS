@@ -10,33 +10,36 @@ import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
+import java.util.UUID
 
-data class FirmwareProgrammerAction(val flasherPos: BlockPos, val script: String, val flash: Boolean) :
+data class FlashMCU(val session: UUID, val pos: BlockPos) :
     CustomPacketPayload {
     companion object {
         val TYPE =
-            CustomPacketPayload.Type<FirmwareProgrammerAction>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "firmware_programmer_action"))
-        val CODEC: StreamCodec<ByteBuf, FirmwareProgrammerAction> = StreamCodec.composite(
+            CustomPacketPayload.Type<FlashMCU>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "flash_mcu"))
+        val CODEC: StreamCodec<ByteBuf, FlashMCU> = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8.map(UUID::fromString, UUID::toString),
+            FlashMCU::session,
             BlockPos.STREAM_CODEC,
-            FirmwareProgrammerAction::flasherPos,
-            ByteBufCodecs.STRING_UTF8,
-            FirmwareProgrammerAction::script,
-            ByteBufCodecs.BOOL,
-            FirmwareProgrammerAction::flash,
-            ::FirmwareProgrammerAction
+            FlashMCU::pos,
+            ::FlashMCU
         )
     }
 
     override fun type() = TYPE
 }
 
-data class FlashResult(val messageKey: String) : CustomPacketPayload {
+data class SyncScript(val session: UUID, val script: String, val pos: BlockPos) : CustomPacketPayload {
     companion object {
-        val TYPE = CustomPacketPayload.Type<FlashResult>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "flash_result"))
-        val CODEC: StreamCodec<ByteBuf, FlashResult> = StreamCodec.composite(
+        val TYPE = CustomPacketPayload.Type<SyncScript>(ResourceLocation.fromNamespaceAndPath(BotJS.ID, "sync_script"))
+        val CODEC: StreamCodec<ByteBuf, SyncScript> = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8.map(UUID::fromString, UUID::toString),
+            SyncScript::session,
             ByteBufCodecs.STRING_UTF8,
-            FlashResult::messageKey,
-            ::FlashResult
+            SyncScript::script,
+            BlockPos.STREAM_CODEC,
+            SyncScript::pos,
+            ::SyncScript
         )
     }
 
@@ -50,10 +53,10 @@ object NetworkRegistry {
     fun register(event: RegisterPayloadHandlersEvent) {
         val registrar = event.registrar(BotJS.ID)
         registrar.playToServer(
-            FirmwareProgrammerAction.TYPE,
-            FirmwareProgrammerAction.CODEC,
-            ServerPayloadHandlers::handleFirmwareProgrammerAction
+            FlashMCU.TYPE,
+            FlashMCU.CODEC,
+            ServerPayloadHandlers::handleFlashMCU
         )
-        registrar.playToClient(FlashResult.TYPE, FlashResult.CODEC, ClientPayloadHandlers::handleFlashResult)
+        registrar.playToServer(SyncScript.TYPE, SyncScript.CODEC, ServerPayloadHandlers::handleSyncScript)
     }
 }

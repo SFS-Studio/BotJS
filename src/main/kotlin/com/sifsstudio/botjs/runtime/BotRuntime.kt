@@ -1,90 +1,77 @@
 package com.sifsstudio.botjs.runtime
 
+import com.dokar.quickjs.QuickJs
+import com.dokar.quickjs.binding.asyncFunction
+import com.dokar.quickjs.binding.define
+import com.dokar.quickjs.quickJs
 import com.sifsstudio.botjs.entity.BotEntity
 import com.sifsstudio.botjs.runtime.module.BotModule
 import com.sifsstudio.botjs.runtime.module.DUMMY_MODULE
-import com.sifsstudio.botjs.runtime.threading.RUNTIME_EXECUTOR
-import com.sifsstudio.botjs.util.set
-import com.sifsstudio.botjs.util.withContextCatching
-import net.minecraft.core.HolderLookup
-import net.minecraft.nbt.CompoundTag
-import net.neoforged.neoforge.common.util.INBTSerializable
-import org.mozilla.javascript.*
-import java.lang.reflect.Member
-import java.util.concurrent.Future
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import com.sifsstudio.botjs.runtime.threading.RUNTIME_SCOPE
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-//TODO: Storage data stored into an item?
-const val STORAGE_SIZE = 1
-
-class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
+class BotRuntime {
     var isRunning = false
         private set
     var script = ""
 
     private val modules = mutableListOf<BotModule>()
-    private var runtimeFuture: Future<*>? = null
     private val internalCOMs = Array(2) { SerialComponent(2, this, it) }
     private val ioConnection = Array(2) { DUMMY_MODULE }
-    private val storage = StorageComponent(2, IntArray(STORAGE_SIZE))
-    private val syncTickLock = ReentrantLock()
-    private val syncTickCondition = syncTickLock.newCondition()
+    private var nextTickContinuation: Continuation<Unit>? = null
+    private var runningContext: QuickJs? = null
+    private var runningJob: Job? = null
 
-    override fun serializeNBT(provider: HolderLookup.Provider) = CompoundTag().apply {
-        this["script"] = script
-        this["running"] = isRunning
-        this["storage"] = storage.storage
-    }
-
-    override fun deserializeNBT(provider: HolderLookup.Provider, nbt: CompoundTag) {
-        script = nbt.getString("script")
-        isRunning = nbt.getBoolean("running")
-        val array = nbt.getIntArray("storage")
-        check(array.size == STORAGE_SIZE)
-        System.arraycopy(array, 0, storage.storage, 0, STORAGE_SIZE)
-    }
-
-    fun launch() {
-        runtimeFuture = RUNTIME_EXECUTOR.submit {
-            isRunning = true
-            InterruptibleContextFactory.init()
-            withContextCatching { ctx ->
-                val scope = ImporterTopLevel(ctx).apply {
-                    //Avoid redundant initialization
-                    //ctx.initSafeStandardObjects(this)
-                    NativeRegUtils.init(this, false)
-                    defineProperty("storage", storage, READONLY or PERMANENT)
-                    defineProperty("COM0", internalCOMs[0], READONLY or PERMANENT)
-                    defineProperty("COM1", internalCOMs[1], READONLY or PERMANENT)
-                    put(
-                        "tickSync",
-                        this,
-                        ExposedFunction("tickSync", SYNC_TICK_METHOD, this@BotRuntime)
-                    )
-                }
-                parentScope = scope
-                ctx.evaluateString(scope, script, "bot_script", 0, null)
-            }.onFailure {
-                when (it) {
-                    is WrappedException -> {
-                        if (it.wrappedException !is InterruptedException) {
-                            it.printStackTrace()
+    fun launch(bytecode: ByteArray) {
+        isRunning = true
+        runningJob = RUNTIME_SCOPE.launch {
+            runningContext = quickJs {
+                internalCOMs[0].defineSerialComponent(this)
+                internalCOMs[1].defineSerialComponent(this)
+                define("NativeRegUtils") {
+                    function("rawBitsToFloat") { args ->
+                        if (args.size == 1 && args[0] is Number) {
+                            return@function Float.fromBits((args[0] as Number).toInt())
+                        }
+                        return@function 0.0
+                    }
+                    function("floatToRawBits") { args ->
+                        if (args.size == 1 && args[0] is Number) {
+                            (args[0] as Number).toFloat().toRawBits()
                         }
                     }
-                    is Exception -> {
-                        it.printStackTrace()
+                }
+                asyncFunction("nextTick") {
+                    suspendCoroutine { cont ->
+                        if (nextTickContinuation != null) {
+                            nextTickContinuation = cont
+                        }
                     }
                 }
+                evaluate<Any?>(bytecode)
+                this
             }
+            runningContext = null
+            runningJob = null
             isRunning = false
         }
     }
 
-    fun interrupt() = runtimeFuture?.also {
-        it.cancel(true)
-        runtimeFuture = null
-    } == null
+    fun interrupt(): Boolean {
+        var actualInterruption = false
+        if (runningContext?.isClosed == false) {
+            actualInterruption = true
+            runningContext?.close()
+        }
+        runningContext = null
+        runningJob?.cancel()
+        runningJob = null
+        return actualInterruption
+    }
 
     fun stop() {
         isRunning = false
@@ -95,7 +82,7 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
 
     fun installModule(module: BotModule) {
         modules.add(module)
-        // TEST ONLY
+        // TODO: REMOVE THIS, TEST ONLY
         ioConnection[0] = module
         ioConnection[1] = module
     }
@@ -113,63 +100,6 @@ class BotRuntime : INBTSerializable<CompoundTag>, ScriptableObject() {
         internalCOMs.forEach {
             it.tick()
         }
-        syncTickLock.withLock {
-            syncTickCondition.signal()
-        }
-    }
-
-    @Suppress("unused")
-    fun syncTick() = syncTickLock.withLock {
-        syncTickCondition.await()
-    }
-
-    override fun getClassName(): String = javaClass.name
-
-}
-
-private val SYNC_TICK_METHOD = BotRuntime::class.java.getMethod("syncTick")
-
-@Suppress("UNUSED")
-val DUMMY_RUNTIME = BotRuntime()
-
-class ExposedFunction(name: String, methodOrConstructor: Member, scope: Scriptable) : FunctionObject(
-    name,
-    methodOrConstructor,
-    scope
-) {
-    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<out Any>): Any {
-        return super.call(cx, scope, parentScope, args)
-    }
-}
-
-class InterruptibleContextFactory : ContextFactory() {
-
-    companion object {
-        private var initialized = false
-
-        //Double check to avoid redundant initialization
-        //Otherwise initGlobal will throw IllegalStateException
-        fun init() {
-            if (initialized) {
-                return
-            }
-            synchronized(InterruptibleContextFactory) {
-                if(initialized) {
-                    return
-                }
-                initGlobal(InterruptibleContextFactory())
-                initialized = true
-            }
-        }
-    }
-
-    override fun observeInstructionCount(cx: Context, instructionCount: Int) {
-        if (Thread.interrupted()) {
-            throw InterruptedException("interruption")
-        }
-    }
-
-    override fun makeContext(): Context = super.makeContext().apply {
-        instructionObserverThreshold = 10000
+        nextTickContinuation?.resume(Unit)
     }
 }

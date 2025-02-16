@@ -3,6 +3,7 @@ package com.sifsstudio.botjs.entity
 import com.sifsstudio.botjs.inventory.BotMountMenu
 import com.sifsstudio.botjs.item.BotModuleItem
 import com.sifsstudio.botjs.item.Items
+import com.sifsstudio.botjs.item.component.DataComponents
 import com.sifsstudio.botjs.runtime.BotRuntime
 import com.sifsstudio.botjs.util.isItem
 import com.sifsstudio.botjs.util.set
@@ -22,6 +23,7 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
 
     val runtime = BotRuntime()
     val modules = ItemStackHandler(9)
+    val mcu = ItemStackHandler(1)
     var needResume = false
 
     private fun recollectModule() {
@@ -37,18 +39,16 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
     override fun addAdditionalSaveData(pCompound: CompoundTag) {
         super.addAdditionalSaveData(pCompound)
         if (!level().isClientSide) {
-            pCompound["runtime"] = runtime.serializeNBT(this.registryAccess())
             pCompound["modules"] = modules.serializeNBT(this.registryAccess())
-            pCompound["need_resume"] = needResume
+            pCompound["needResume"] = needResume
         }
     }
 
     override fun readAdditionalSaveData(pCompound: CompoundTag) {
         super.readAdditionalSaveData(pCompound)
         if (!level().isClientSide) {
-            runtime.deserializeNBT(this.registryAccess(), pCompound.getCompound("runtime"))
             modules.deserializeNBT(this.registryAccess(), pCompound.getCompound("modules"))
-            needResume = pCompound.getBoolean("need_resume")
+            needResume = pCompound.getBoolean("needResume")
         }
     }
 
@@ -59,7 +59,9 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
         }
         recollectModule()
         if (needResume) {
-            runtime.launch()
+            mcu.getStackInSlot(0).get(DataComponents.FIRMWARE)?.let {
+                runtime.launch(it.byteCode)
+            }
         }
     }
 
@@ -86,7 +88,9 @@ class BotEntity(type: EntityType<BotEntity>, level: Level) : Mob(type, level), M
             if (!this.level().isClientSide) {
                 if (!runtime.isRunning) {
                     recollectModule()
-                    runtime.launch()
+                    mcu.getStackInSlot(0).get(DataComponents.FIRMWARE)?.let {
+                        runtime.launch(it.byteCode)
+                    }
                 } else {
                     runtime.stop()
                 }

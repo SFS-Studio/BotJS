@@ -1,0 +1,18 @@
+// 1.21.4	2025-02-08T20:24:02.4866725	Model Definitions - botjs
+16dae577831793bf0971fffe39a5e94e7cedd36d assets/botjs/blockstates/bot_assembler.json
+2fe5d5574d0510974668e818d7c3a07b590d10be assets/botjs/blockstates/firmware_programmer.json
+d2058bd047622e6310f8525ab232550d6ef1fd58 assets/botjs/items/basic_mcu.json
+04ad07ff81592fce64ba95cba933d0372d08af19 assets/botjs/items/bio_sensor_module.json
+e4c7af584b627e984db64d5569f562f02bef13d1 assets/botjs/items/firmware_programmer.json
+d39b597cdbac588c57804fe825070d5a5b1bc297 assets/botjs/items/log_downloader.json
+261aa1602ba52b08f9d0133ea31fc1bf8055e88d assets/botjs/items/script.json
+234889b6a17d896b5936683892773ce3582b24c8 assets/botjs/items/switch.json
+98f27859e66453c86d9a4fe21f50ae48c95becb2 assets/botjs/items/wrench.json
+1105d15e1477343239e0b6ca3725c9f895acd922 assets/botjs/models/block/bot_assembler.json
+6eefb087d8abc8319199af73c8c65f22dc0ed20b assets/botjs/models/block/firmware_programmer.json
+9b7a39944acd3c36bfa86c31046f259d3ed6eb54 assets/botjs/models/item/basic_mcu.json
+47a8a65399efe8ec71d5730911eb4ffb546db501 assets/botjs/models/item/bio_sensor_module.json
+e1a4e8f0946b86726fd0406f8ec8a58585d97572 assets/botjs/models/item/log_downloader.json
+104fdb17f8b78a69ade583ebffd08adc67f75a70 assets/botjs/models/item/script.json
+800549bf0f0ab48fcec0899ed809b920263ee827 assets/botjs/models/item/switch.json
+0f0d9a05592aba769254401ca33745b0606fbe2c assets/botjs/models/item/wrench.json

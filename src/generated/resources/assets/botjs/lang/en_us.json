@@ -1,16 +1,17 @@
 {
   "block.botjs.firmware_programmer": "Firmware Programmer",
+  "botjs.networking.failed": "Network failed due to: %1$s",
   "entity.botjs.bot": "Bot",
   "item.botjs.basic_mcu": "Basic Mcu",
   "item.botjs.bio_sensor_module": "Bio Sensor Module",
   "item.botjs.log_downloader": "Log Downloader",
+  "item.botjs.script": "Script",
   "item.botjs.switch": "Switch",
   "item.botjs.wrench": "Wrench",
   "item_group.botjs": "BotJS",
-  "menu.botjs.firmware_programmer.flash": "Flash",
-  "menu.botjs.firmware_programmer.flash_result.nothing_to_flash": "No MCU found in input slot!",
-  "menu.botjs.firmware_programmer.flash_result.output_occupied": "Output slot is occupied!",
+  "menu.botjs.firmware_programmer.flash.error": "Compile error: %1$s",
+  "menu.botjs.firmware_programmer.flash.nothing_to_flash": "No MCU found in MCU slot!",
+  "menu.botjs.firmware_programmer.flash.success": "Flush success",
   "menu.botjs.firmware_programmer.script_here": "Script Here...",
-  "menu.botjs.firmware_programmer.title": "Firmware Programmer",
-  "toast.botjs.flash_failed": "Failed to flash the MCU!"
+  "menu.botjs.firmware_programmer.title": "Firmware Programmer"
 }

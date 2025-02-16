@@ -1,13 +1,14 @@
 @file: Suppress("UNUSED")
 package com.sifsstudio.botjs.util
 
-import net.minecraft.nbt.*
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.StringTag
+import net.minecraft.nbt.Tag
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.BlockState
-import org.mozilla.javascript.Context
 
 // ItemStack
 infix fun ItemStack.isItem(item: Item) = `is`(item)
@@ -25,14 +26,6 @@ operator fun CompoundTag.set(key: String, value: ByteArray) = putByteArray(key, 
 
 // String
 fun String.asStringTag(): StringTag = StringTag.valueOf(this)
-
-// Context
-inline fun<T> withContextCatching(block: (Context) -> T) =
-    runCatching {
-        Context.enter().use {
-            block(it)
-        }
-    }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> suppressNullCheck(): T = null as T

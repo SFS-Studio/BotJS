@@ -5,6 +5,7 @@ import com.sifsstudio.botjs.blockentity.BlockEntities
 import com.sifsstudio.botjs.entity.Entities
 import com.sifsstudio.botjs.inventory.MenuTypes
 import com.sifsstudio.botjs.item.Items
+import com.sifsstudio.botjs.item.component.DataComponents
 import com.sifsstudio.botjs.runtime.threading.onServerStarting
 import com.sifsstudio.botjs.runtime.threading.onServerStopped
 import net.minecraft.core.registries.Registries
@@ -41,6 +42,7 @@ object BotJS {
     init {
         CREATIVE_TABS.register(MOD_BUS)
         Items.REGISTRY.register(MOD_BUS)
+        DataComponents.REGISTRY.register(MOD_BUS)
         Blocks.REGISTRY.register(MOD_BUS)
         Entities.REGISTRY.register(MOD_BUS)
         BlockEntities.REGISTRY.register(MOD_BUS)

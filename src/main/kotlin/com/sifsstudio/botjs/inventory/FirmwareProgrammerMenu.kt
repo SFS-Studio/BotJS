@@ -1,29 +1,36 @@
 package com.sifsstudio.botjs.inventory
 
+import com.sifsstudio.botjs.block.Blocks
+import com.sifsstudio.botjs.item.Items
 import com.sifsstudio.botjs.item.McuItem
-import net.minecraft.core.BlockPos
+import com.sifsstudio.botjs.util.isItem
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
+import net.minecraft.world.inventory.ContainerLevelAccess
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.items.IItemHandler
 import net.neoforged.neoforge.items.ItemStackHandler
 import net.neoforged.neoforge.items.SlotItemHandler
+import java.util.*
 
 class FirmwareProgrammerMenu(
     pContainerId: Int,
     pPlayerInventory: Inventory,
-    val flasherPos: BlockPos,
-    val script: String,
-    mcuIn: IItemHandler,
-    mcuOut: IItemHandler
+    val containerLevelAccess: ContainerLevelAccess,
+    val session: UUID,
+    script: IItemHandler,
+    mcu: IItemHandler,
 ) : AbstractContainerMenu(MenuTypes.FIRMWARE_PROGRAMMER, pContainerId) {
 
+    val pos
+        get() = containerLevelAccess.evaluate { _, pos -> pos }.get()
+
     init {
-        addSlot(SlotItemHandler(mcuIn, 0, 353, 176))
-        addSlot(SlotItemHandler(mcuOut, 0, 454, 176))
+        addSlot(SlotItemHandler(script, 0, 355, 179))
+        addSlot(SlotItemHandler(mcu, 0, 439, 179))
         for (i in 0..2) {
             for (k in 0..8) {
                 addSlot(Slot(pPlayerInventory, k + i * 9 + 9, 332 + k * 18, 232 + i * 18))
@@ -37,53 +44,66 @@ class FirmwareProgrammerMenu(
     constructor(pContainerId: Int, pPlayerInventory: Inventory, pFriendlyByteBuf: FriendlyByteBuf) : this(
         pContainerId,
         pPlayerInventory,
-        pFriendlyByteBuf.readBlockPos(),
-        pFriendlyByteBuf.readUtf(),
+        ContainerLevelAccess.create(pPlayerInventory.player.level(), pFriendlyByteBuf.readBlockPos()),
+        pFriendlyByteBuf.readUUID(),
         ItemStackHandler(1),
         ItemStackHandler(1)
     )
 
     override fun quickMoveStack(pPlayer: Player, pIndex: Int): ItemStack {
         val slot = this.slots[pIndex]
-        var oldStack = ItemStack.EMPTY
+        var quickMovedStack = ItemStack.EMPTY
         if (slot.hasItem()) {
-            val newStack = slot.item
-            oldStack = newStack.copy()
-            if (pIndex == 1) {
-                if (!this.moveItemStackTo(newStack, 2, 38, true)) {
-                    return ItemStack.EMPTY
-                }
-                slot.onQuickCraft(newStack, oldStack)
-            } else if (pIndex != 0) {
-                if (newStack.item is McuItem) {
-                    if (!this.moveItemStackTo(newStack, 0, 1, false)) {
+            val rawStack = slot.item
+            quickMovedStack = rawStack.copy()
+            if (pIndex in 2..38) {
+                if (quickMovedStack.item is McuItem) {
+                    if (!this.moveItemStackTo(rawStack, 1, 2, false)) {
+                        if (pIndex < 29) {
+                            if (!this.moveItemStackTo(rawStack, 29, 38, false)) {
+                                return ItemStack.EMPTY
+                            }
+                        } else if (!this.moveItemStackTo(rawStack, 2, 29, false)) {
+                            return ItemStack.EMPTY
+                        }
+                    }
+                } else if (quickMovedStack isItem Items.SCRIPT) {
+                    if (!this.moveItemStackTo(rawStack, 0, 1, false)) {
+                        if (pIndex < 29) {
+                            if (!this.moveItemStackTo(rawStack, 29, 38, false)) {
+                                return ItemStack.EMPTY
+                            }
+                        } else if (!this.moveItemStackTo(rawStack, 2, 29, false)) {
+                            return ItemStack.EMPTY
+                        }
+                    }
+                } else {
+                    if (pIndex < 29) {
+                        if (!this.moveItemStackTo(rawStack, 29, 38, false)) {
+                            return ItemStack.EMPTY
+                        }
+                    } else if (!this.moveItemStackTo(rawStack, 2, 29, false)) {
                         return ItemStack.EMPTY
                     }
-                } else if (pIndex in 2..28) {
-                    if (!this.moveItemStackTo(newStack, 29, 38, false)) {
-                        return ItemStack.EMPTY
-                    }
-                } else if (pIndex in 29..37 && !this.moveItemStackTo(newStack, 2, 29, false)) {
-                    return ItemStack.EMPTY
                 }
-            } else if (!this.moveItemStackTo(newStack, 2, 38, false)) {
+            } else if (!this.moveItemStackTo(rawStack, 2, 38, false)) {
                 return ItemStack.EMPTY
             }
 
-            if (newStack.isEmpty) {
+            if (rawStack.isEmpty) {
                 slot.setByPlayer(ItemStack.EMPTY)
             } else {
                 slot.setChanged()
             }
 
-            if (oldStack.count == newStack.count) {
+            if (quickMovedStack.count == rawStack.count) {
                 return ItemStack.EMPTY
             }
 
-            slot.onTake(pPlayer, newStack)
+            slot.onTake(pPlayer, rawStack)
         }
-        return oldStack
+        return quickMovedStack
     }
 
-    override fun stillValid(pPlayer: Player) = true
+    override fun stillValid(pPlayer: Player) = stillValid(containerLevelAccess, pPlayer, Blocks.FIRMWARE_PROGRAMMER)
 }

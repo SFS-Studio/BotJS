@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "botjs:item/bio_sensor_module"
+    "layer0": "botjs:item/script"
   }
 }

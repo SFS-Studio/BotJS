@@ -10,10 +10,12 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.MenuProvider
 import net.minecraft.world.SimpleMenuProvider
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.inventory.ContainerLevelAccess
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
+import java.util.UUID
 
 class FirmwareProgrammer(properties: Properties) : BaseEntityBlock(properties) {
     companion object {
@@ -32,10 +34,10 @@ class FirmwareProgrammer(properties: Properties) : BaseEntityBlock(properties) {
             FirmwareProgrammerMenu(
                 pContainerId,
                 pPlayerInventory,
-                pPos,
+                ContainerLevelAccess.create(pLevel, pPos),
+                UUID(0, 0), // you never need it on server :D
                 blockEntity.script,
-                blockEntity.mcuIn,
-                blockEntity.mcuOut
+                blockEntity.mcu,
             )
         }, Component.translatable("menu.botjs.firmware_programmer.title"))
 
@@ -50,11 +52,13 @@ class FirmwareProgrammer(properties: Properties) : BaseEntityBlock(properties) {
     ): InteractionResult {
         if (!pLevel.isClientSide && pPlayer is ServerPlayer) {
             pState.getMenuProvider(pLevel, pPos)?.let { menu ->
-                pPlayer.openMenu(menu) {
-                    it.writeBlockPos(pPos)
-                    pLevel.getBlockEntity(pPos)?.let { blockEntity ->
-                        if (blockEntity is FirmwareProgrammerBlockEntity) {
-                            it.writeUtf(blockEntity.script)
+                pLevel.getBlockEntity(pPos)?.let { blockEntity ->
+                    if (blockEntity is FirmwareProgrammerBlockEntity) {
+                        pPlayer.openMenu(menu) {
+                            it.writeBlockPos(pPos)
+                            val session = UUID.randomUUID()
+                            it.writeUUID(session)
+                            blockEntity.currentSession = session
                         }
                     }
                 }

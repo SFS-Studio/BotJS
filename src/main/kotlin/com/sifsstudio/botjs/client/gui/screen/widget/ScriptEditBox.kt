@@ -130,8 +130,10 @@ class ScriptEditBox(
         return ret || pKeyCode == GLFW.GLFW_KEY_E
     }
 
+    fun canTypeChar(pCodePoint: Char) = visible && isFocused && StringUtil.isAllowedChatCharacter(pCodePoint)
+
     override fun charTyped(pCodePoint: Char, pModifiers: Int): Boolean {
-        if (visible && isFocused && StringUtil.isAllowedChatCharacter(pCodePoint)) {
+        if (canTypeChar(pCodePoint)) {
             textField.insertText(pCodePoint.toString())
             if (textField.lineCount != cachedLineCount) {
                 cachedLineCount = textField.lineCount

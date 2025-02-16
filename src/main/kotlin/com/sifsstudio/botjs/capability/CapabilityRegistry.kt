@@ -25,9 +25,8 @@ object CapabilityRegistry {
             BlockEntities.FIRMWARE_PROGRAMMER
         ) { blockEntity, direction ->
             when (direction) {
-                Direction.UP -> blockEntity.mcuIn
-                Direction.DOWN -> blockEntity.mcuOut
-                else -> null
+                Direction.UP, Direction.DOWN -> blockEntity.script
+                else -> blockEntity.mcu
             }
         }
         event.registerBlockEntity(

@@ -12,7 +12,7 @@ object ModData {
     fun gatherData(event: GatherDataEvent.Client) {
         val gen = event.generator
 
-        gen.addProvider(event.includeDev(), ::ModItemModels)
-        gen.addProvider(event.includeDev(), ::ModLangEn)
+        gen.addProvider(true, ::ModModels)
+        gen.addProvider(true, ::ModLangEn)
     }
 }
