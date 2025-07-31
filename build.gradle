@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.76'
+    id 'net.neoforged.moddev' version '2.0.105'
     id 'org.jetbrains.kotlin.jvm'
 }
 
@@ -82,12 +82,12 @@ configurations {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
-    implementation 'thedarkcolour:kotlinforforge-neoforge:5.7.0:slim'
-    additionalRuntimeClasspath 'org.jetbrains.kotlin:kotlin-stdlib'
-    additionalRuntimeClasspath 'org.jetbrains.kotlin:kotlin-reflect'
-    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
-    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-core'
-    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-json'
+    implementation 'thedarkcolour:kotlinforforge-neoforge:5.9.0'
+//    additionalRuntimeClasspath 'org.jetbrains.kotlin:kotlin-stdlib'
+//    additionalRuntimeClasspath 'org.jetbrains.kotlin:kotlin-reflect'
+//    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+//    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-core'
+//    additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-json'
 
     implementation(jarJar("io.github.dokar3:quickjs-kt") {
         version {
@@ -103,7 +103,6 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
             neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
