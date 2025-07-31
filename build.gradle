@@ -89,12 +89,12 @@ dependencies {
     additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-core'
     additionalRuntimeClasspath 'org.jetbrains.kotlinx:kotlinx-serialization-json'
 
-    implementation(jarJar("io.github.dokar3:quickjs-kt") {
+    jarJar(implementation("io.github.dokar3:quickjs-kt")) {
         version {
             strictly '[1.0.0-alpha13, 2.0.0)'
             prefer '1.0.0-alpha13'
         }
-    })
+    }
     additionalRuntimeClasspath(group: "io.github.dokar3", name: "quickjs-kt", version: "1.0.0-alpha13")
 }
 
